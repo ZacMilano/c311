@@ -1,0 +1,130 @@
+#lang typed/racket
+(require typed/rackunit)
+
+
+; Problem 1
+(: list-ref (All (A) (→ (Listof A) Number A)))
+(define list-ref
+  (lambda (ls n)
+    (letrec
+        ([nth-cdr : (→ Number (Listof A))
+                  (lambda (n)
+	            (cond
+                      [(zero? n) ls]
+                      [else (cdr (nth-cdr (sub1 n)))])
+                    )])
+      (car (nth-cdr n)))))
+
+(check-equal? (list-ref '(a b c) 2) 'c)
+(check-equal? (list-ref '(a b c) 0) 'a)
+(check-equal? (list-ref '(5 4 3 2 1 0) 5) 0)
+(check-equal? (list-ref '(5 4 3 2 1 0) 4) 1)
+(check-equal? (list-ref '(5 4 3 2 1 0) 3) 2)
+(check-equal? (list-ref '(5 4 3 2 1 0) 2) 3)
+(check-equal? (list-ref '(5 4 3 2 1 0) 1) 4)
+(check-equal? (list-ref '(5 4 3 2 1 0) 0) 5)
+
+
+; Problem 2
+(: union (All (A) (-> (Listof A) (Listof A) (Listof A))))
+(define (union a b)
+  (cond
+    [(null? a) b]
+    [(memv (car a) b) (union (cdr a) b)]
+    [else (cons (car a) (union (cdr a) b))]))
+
+(check-equal? (union '() '()) '())
+(check-equal? (union '(a) '()) '(a))
+(check-equal? (union '() '(b)) '(b))
+(check-equal? (union '(a b c) '()) '(a b c))
+(check-equal? (union '() '(b c d)) '(b c d))
+(check-equal? (union '(a b c) '(a b c)) '(a b c))
+(check-equal? (union '(a b) '(b c)) '(a b c))
+(check-equal? (union '(a b) '(c d)) '(a b c d))
+
+
+; Problem 3
+(: extend (All (A) (-> Number (-> A Boolean) (-> A Boolean))))
+(define (extend x pred)
+  (λ (y)
+    (or (eqv? x y)
+        (pred y))))
+
+(check-equal? ((extend 1 even?) 0) #t)
+(check-equal? ((extend 1 even?) 1) #t)
+(check-equal? ((extend 1 even?) 2) #t)
+(check-equal? ((extend 1 even?) 3) #f)
+(check-equal? (filter (extend 1 even?) '(0 1 2 3 4 5)) '(0 1 2 4))
+(check-equal? (filter (extend 3 (extend 1 even?)) '(0 1 2 3 4 5)) '(0 1 2 3 4))
+(check-equal? (filter (extend 7 (extend 3 (extend 1 even?))) '(0 1 2 3 4 5)) '(0 1 2 3 4))
+(check-equal? (filter (extend 7 (extend 3 (extend 1 even?))) '(0 1 2 3 7 5)) '(0 1 2 3 7))
+(check-equal? (filter (extend 7 (extend 3 (extend 1 even?))) '(0 2 4 6)) '(0 2 4 6))
+
+; Problem 4
+(define-type AssociationList
+  (Listof (Pairof Symbol Any)))
+
+(: walk-symbol (-> Symbol AssociationList Any))
+(define (walk-symbol x s)
+  (let ([val : Any (assv x s)])
+    (cond
+      [(eqv? val #f) x]
+      [(and (pair? val)
+            (symbol? (cdr val)))
+       (walk-symbol (cdr val) s)]
+      [(pair? val) (cdr val)])))
+
+(check-equal? (walk-symbol 'a '((a . 5))) 5)
+(check-equal? (walk-symbol 'a '((b . c) (a . b))) 'c)
+(check-equal? (walk-symbol 'a '((a . 5) (b . 6) (c . a))) 5)
+(check-equal? (walk-symbol 'c '((a . 5) (b . (a . c)) (c . a))) 5)
+(check-equal? (walk-symbol 'b '((a . 5) (b . ((c . a))) (c . a))) '((c . a)))
+(check-equal? (walk-symbol 'd '((a . 5) (b . (1 2)) (c . a) (e . c) (d . e))) 5)
+(check-equal? (walk-symbol 'd '((a . 5) (b . 6) (c . f) (e . c) (d . e))) 'f)
+(check-equal? (walk-symbol 'p '((q . r) (u . z) (r . s) (t . s) (s . u) (p . q))) 'z)
+
+; Problem 5
+(define-type Exp
+  (U Symbol
+     (List 'λ (List Symbol) Exp)
+     (List Exp Exp)))
+
+(: exp? (-> Any Boolean))
+(define exp?
+  (λ (x)
+    (match x
+      [`,y
+       #:when (symbol? y)
+       #t]
+      [`(λ (,x) ,body)
+       (and (symbol? x) (exp? body))]
+      [`(,rator ,rand)
+       (and (exp? rator) (exp? rand))]
+      [`,whatever
+       #f])))
+
+
+; Problem 6
+
+
+; Problem 7
+
+
+; Problem 8
+
+
+; Problem 9
+
+
+; Problem 10
+
+
+; Problem 11
+
+
+; Problem 12
+
+
+; Problem 13
+
+

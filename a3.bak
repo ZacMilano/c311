@@ -1,0 +1,84 @@
+#lang typed/racket
+
+
+(define-type Exp
+  (U Symbol
+     Number
+     (List '+ Exp Exp)
+     (List 'lambda (List Symbol) Exp)
+     (List Exp Exp)))
+(define-type Closure
+  (→ Val Val))
+(define-type Val
+  (U Number
+     Boolean
+     Closure))
+
+(define-type FEnv
+  (→ Symbol Val))
+
+(: empty-env-fn (-> FEnv))
+(define (empty-env-fn)
+  (lambda (y) (error "Unbound variable" y)))
+
+(: extend-env-fn (-> Symbol Val FEnv FEnv))
+(define (extend-env-fn x a env)
+  (lambda (y)
+    (if (eqv? y x)
+        a
+        (apply-env-fn env y))))
+
+(: apply-env-fn (-> FEnv Symbol Val))
+(define (apply-env-fn env y)
+  (env y))
+
+(: value-of-fn (→ Exp FEnv Val))
+(define (value-of-fn exp env)
+  (match exp
+    [`,y #:when (symbol? y) (apply-env env y)]
+    [`,n #:when (number? n) n]
+    [`,b #:when (boolean? b) b]
+    [`(zero? ,e)
+     (let ([res (value-of-fn e env)])
+       (cond
+         [(number? res) (zero? res)]
+         [else (error "Type mismatch; given" res "in call to zero?")]))]
+    [`(sub1 ,e)
+     (let ([res (value-of-fn e env)])
+       (cond
+         [(number? res) (sub1 res)]
+         [else (error "Type mismatch; given" res "in call to sub1")]))]
+    [`(* e1 e2)
+     (let ([r1 (value-of-fn e1 env)]
+           [r2 (value-of-fn e2 env)])
+       (cond
+         [(and (number? r1) (number? r2)) (* r1 r2)]
+         [else (error "Tried to multiply non-numbers" r1 'and r2)]))]
+    [`(if ,cond ,then ,else)
+     (let ([]))]
+    [`(let ,lets ,body) ...]
+    [`(lambda (,x) ,body)
+     (lambda ([a: Val]) (value-of-fn body (extend-env x a env)))]
+    [`(,rator ,rand)
+     (let ([clos (value-of-fn rator env)]
+           [a (value-of-fn rand env)])
+       (cond
+         [(procedure? clos) (clos a)]
+         [else (error "Your rator" clos "is not a function")]))]))
+
+
+
+(define-type DSEnv
+  (Listof (Pairof Symbol Val)))
+
+(: value-of-ds (-> Exp DSEnv Val))
+(define (value-of-ds exp env) ...)
+
+(: empty-env-ds (-> DSEnv))
+(define (empty-env-ds) ...)
+
+(: extend-env-ds (-> Symbol Val DSEnv DSEnv))
+(define (extend-env-ds x a env) ...)
+
+(: apply-env-ds (-> DSEnv Symbol Val))
+(define (apply-env-ds env y) ...)
