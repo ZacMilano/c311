@@ -258,7 +258,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-type DSEnv
-  (List 'extend Symbol Val DSEnv))
+  (U '()
+     (List 'extend Symbol Val DSEnv)))
 
 (: empty-env-ds (-> DSEnv))
 (define (empty-env-ds) '())
@@ -270,7 +271,11 @@
 (: apply-env-ds (-> DSEnv Symbol Val))
 (define (apply-env-ds env y)
   (match env
-    [`() (error 'value-of-ds "unbound variable ~s" y)]))
+    [`() (error 'value-of-ds "unbound variable ~s" y)]
+    [`(extend ,x ,a ,rest-of-env)
+     (if (eqv? y x)
+         a
+         (apply-env-ds rest-of-env y))]))
 
 (: value-of-ds (-> Exp DSEnv Val))
 (define (value-of-ds exp env)
