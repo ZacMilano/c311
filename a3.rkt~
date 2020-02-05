@@ -149,7 +149,7 @@
 
 (: empty-env-fn (-> FEnv))
 (define (empty-env-fn)
-  (lambda (y) (error 'value-of-fn "unbound variable ~s" y)))
+  (lambda (y) (error "Unbound variable" y)))
 
 (: extend-env-fn (-> Symbol Val FEnv FEnv))
 (define (extend-env-fn x a env)
@@ -258,19 +258,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-type DSEnv
-  (List 'extend Symbol Val DSEnv))
+  (Listof (Pairof Symbol Val)))
 
 (: empty-env-ds (-> DSEnv))
 (define (empty-env-ds) '())
 
 (: extend-env-ds (-> Symbol Val DSEnv DSEnv))
 (define (extend-env-ds x a env)
-  (list 'extend x a env))
+  ...)
 
 (: apply-env-ds (-> DSEnv Symbol Val))
 (define (apply-env-ds env y)
-  (match env
-    [`() (error 'value-of-ds "unbound variable ~s" y)]))
+  ...)
 
 (: value-of-ds (-> Exp DSEnv Val))
 (define (value-of-ds exp env)
