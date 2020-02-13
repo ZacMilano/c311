@@ -1,0 +1,10 @@
+#lang typed/racket
+(require typed/rackunit)
+
+(define-syntax test-runner
+  (syntax-rules (>)
+    [(_) "All tests passed!"]
+    [(_ > test result more ...)
+     (begin (check-equal? test 'result)
+            (test-runner more ...))]))
+
