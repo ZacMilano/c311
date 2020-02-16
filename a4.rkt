@@ -1,4 +1,4 @@
-#lang typed/racket
+#lang typed/racket/no-check
 (require typed/rackunit)
 
 (define-syntax test-runner
@@ -8,6 +8,8 @@
      (begin (check-equal? test 'result)
             (test-runner more ...))]))
 
+(define (check-values-equal? 
+
 ; 1
 ; Want to test if (car to-filter) passes pred?; if it does, cons it onto
 ; whatever is returned with a recursive call on its cdr; else, cons onto definite-falses
@@ -15,9 +17,13 @@
                            (Listof A))))
 (define (filter-sps pred? to-filter definite-falses)
   (cond
-    [(null? maybe-trues) (values to-filter definite-falses)]
-    [else (let-values ([(trues falses) ...])
-            (...))]))
+    [(null? to-filter) (values to-filter definite-falses)]
+    [else (let-values ([(trues falses) (values (cdr to-filter) definite-falses)])
+            (if (pred? (car to-filter))
+                (values (cons (car to-filter) trues)
+                        falses)
+                (values trues
+                        (cons (car to-filter) falses))))]))
 
 (test-runner
  > (filter-sps even? '(1 2 3 4 5 6 7 8 9 10) '())
