@@ -309,11 +309,27 @@ Runs rather quickly (seems faster than O(n^2)) even for n=1000
 (define-syntax macro-map
   (syntax-rules ()
     [(_ mac '()) '()]
-    [(_ mac '(a . d))
+    [(_ mac '(a d ...))
      (cons (mac a)
-           (macro-map mac d))]))
+           (macro-map mac '(d ...)))]))
 
+#|
 
+> (macro-map quote '((lambda (x) x) (lambda (x) (+ 2 x)) (lambda (x) 7)))
+'((lambda (x) x) (lambda (x) (+ 2 x)) (lambda (x) 7))
+> (macro-map copy-code '((lambda (x) x) (lambda (x) (+ 2 x)) (lambda (x) 7)))
+'((#<procedure> (lambda (x) x)) (#<procedure> (lambda (x) (+ 2 x))) (#<procedure> (lambda (x) 7)))
+> (macro-map quote '((trinidad and tobago) (saint vincent and the grenadines) (antigua and barbuda)))
+'((trinidad and tobago) (saint vincent and the grenadines) (antigua and barbuda))
+> (macro-map copy-code '((lambda (x) x) (lambda (x) (+ 2 x)) (lambda (x) 7)))
+'((#<procedure> (lambda (x) x)) (#<procedure> (lambda (x) (+ 2 x))) (#<procedure> (lambda (x) 7)))
+> (macro-map quote-quote '((trinidad and tobago) (saint vincent and the grenadines) (antigua and barbuda)))
+'('(trinidad and tobago) '(saint vincent and the grenadines) '(antigua and barbuda))
+> (macro-map copy-code '())
+'()
+> 
+
+|#
 
 
 
