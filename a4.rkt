@@ -107,18 +107,211 @@
 |#
 
 
+; Problem 2
+
+(define (fib-sps n store)
+  (cond
+    [(assv n store)
+     =>
+     (lambda ([p : (Pairof Number Number)]) store)]
+    [(or (zero? n)
+         (zero? (sub1 n)))
+     (cons (cons n n) store)]
+    [else (let* ([r1 (fib-sps (sub1 n) store)]
+                 [r2 (fib-sps (sub1 (sub1 n)) r1)]
+                 [fn-1 (cdr (assv (sub1 n) r2))]
+                 [fn-2 (cdr (assv (sub1 (sub1 n)) r2))])
+            (cons (cons n (+ fn-1 fn-2)) r2))]))
+
+#|
+
+Runs rather quickly (seems faster than O(n^2)) even for n=1000
+
+> (fib-sps 0 '())
+'((0 . 0))
+> (fib-sps 1 '())
+'((1 . 1))
+> (fib-sps 10 '())
+'((10 . 55)
+  (9 . 34)
+  (8 . 21)
+  (7 . 13)
+  (6 . 8)
+  (5 . 5)
+  (4 . 3)
+  (3 . 2)
+  (2 . 1)
+  (0 . 0)
+  (1 . 1))
+> (fib-sps 20 '())
+'((20 . 6765)
+  (19 . 4181)
+  (18 . 2584)
+  (17 . 1597)
+  (16 . 987)
+  (15 . 610)
+  (14 . 377)
+  (13 . 233)
+  (12 . 144)
+  (11 . 89)
+  (10 . 55)
+  (9 . 34)
+  (8 . 21)
+  (7 . 13)
+  (6 . 8)
+  (5 . 5)
+  (4 . 3)
+  (3 . 2)
+  (2 . 1)
+  (0 . 0)
+  (1 . 1))
+> 
+
+|#
+
+; Problem 3
+
+(define-syntax and*
+  (syntax-rules ()
+    [(_) #t]
+    [(_ v1) v1]
+    [(_ v1 others ...)
+     (if (eqv? v1 #f) #f (and* others ...))]))
 
 
+#|
+
+> (and* )
+#t
+> (and* 0)
+0
+> (and* 1)
+1
+> (and* 1 #t)
+#t
+> (and* 1 #t #f #t)
+#f
+> (and* 1 2 3)
+3
+> (and* #f)
+#f
+> (and* 'a)
+'a
+> (and* #t #t #t #t #t #t #f)
+#f
+> 
+
+|#
+
+; Problem 4
+
+(define-syntax list*
+  (syntax-rules ()
+    [(_) (raise-syntax-error "Incorrect argument-count to list*")]
+    [(_ e1) e1]
+    [(_ e1 others ...)
+     (cons e1 (list* others ...))]))
+
+; Have this to show me that this comes from list* (when in DrRacket)
+(list* 'ayo)
+
+#|
+
+> (list*)
+[I REMOVED THE IMAGES BTW] raise-syntax-error: arity mismatch;
+ the expected number of arguments does not match the given number
+  given: 1
+  arguments...:
+> (list* 'a 'b 'c 'd)
+'(a b c . d)
+> (list* 'a)
+'a
+> (list* 'a 'b 'c 'd 'e '())
+'(a b c d e)
+> 
+
+|#
 
 
+; Problem 5
 
+(define-syntax macro-list
+  (syntax-rules ()
+    [(_) '()]
+    [(_ a d ...) (cons a (macro-list d ...))]))
 
+#|
 
+> (macro-list)
+'()
+> (macro-list 1 'b 2 'd)
+'(1 b 2 d)
+> (macro-list 1 1 1 1 1 1 1)
+'(1 1 1 1 1 1 1)
+> (macro-list 0 '() 1 '('()) 2 '('()'()))
+'(0 () 1 ('()) 2 ('() '()))
+> 
 
+|#
 
+; Problem 6
 
+(define-syntax mcond
+  (syntax-rules (else)
+    [(_) (raise-syntax-error "Incorrect argument-count to mcond*")]
+    [(_ (else do-this) others ...)
+        do-this]
+    [(_ (condition consequent) otherwise ...)
+     (if condition consequent (mcond otherwise ...))]))
 
+#|
 
+> (mcond
+   (else 'dog))
+'dog
+> (mcond
+    (#f #t)
+    (else 'dog))
+'dog
+> (mcond 
+    (else 'cat))
+'cat
+> (mcond 
+    (#t #t) 
+    (unbound variables))
+#t
+> (mcond 
+    (#t #t) 
+    (reeeeeeecursioooooooooon works-for-me))
+#t
+> (mcond 
+    (#t #t) 
+    (really bad syntax))
+[I REMOVED THE IMAGES BTW] mcond: bad syntax in: (mcond (really bad syntax))
+> (mcond 
+    (#t #t) 
+    (thats unfortunate))
+#t
+> 
+
+|#
+
+; Problem 7
+
+(define-syntax copy-code
+  (syntax-rules ()
+    [(_ x) `(,x x)]))
+
+(define-syntax quote-quote
+  (syntax-rules ()
+    [(_ e) (quote (quote e))]))
+
+(define-syntax macro-map
+  (syntax-rules ()
+    [(_ mac '()) '()]
+    [(_ mac '(a . d))
+     (cons (mac a)
+           (macro-map mac d))]))
 
 
 
