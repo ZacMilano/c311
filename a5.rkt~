@@ -13,31 +13,27 @@
      (List 'lambda (List Symbol) Exp)
      (List Exp Exp)))
 
-(define-type Env-Cbv
+(define-type Env
   (-> Symbol Val))
 
-(define-type Closure-Cbv
+(define-type Closure
   (-> Val Val))
 
 (define-type Val
   (U Boolean
      Number
-     Void
-     Closure-Cbv))
+     Closure))
 
-(: apply-closure (-> Closure-Cbv Val Val))
+(: apply-closure (-> Closure Val Val))
 (define (apply-closure rator rand)
   (rator rand))
 
-(: apply-env (-> Env-Cbv Symbol Val))
+(: apply-env (-> Env Symbol Val))
 (define (apply-env env y)
   (env y))
 
-(: empty-env-cbv (-> Env-Cbv))
-(define (empty-env-cbv) (lambda (y) (error "Unbound variable" y)))
 
-
-(: value-of-cbv (-> Exp Env-Cbv Val))
+(: value-of-cbv (-> Exp Env Val))
 (define (value-of-cbv exp env)
   (match exp
     [`,b #:when (boolean? b) b]
@@ -68,20 +64,14 @@
      (let ([res (value-of-cbv n env)])
        (if (not (number? res))
            (error "Type mismatch; given" res "in call to random in value-of-cbv")
-           (random (cast res Integer))))]
+           (random res)))]
     [`,y #:when (symbol? y) (apply-env env y)]
     [`(lambda (,x) ,body) (make-closure-cbv x body env)]
-    [`(,rator ,rand)
-     (let ([clos (value-of-cbv rator env)]
-           [a (value-of-cbv rand env)])
-       (if (or (boolean? clos)
-               (number? clos)
-               (symbol? clos))
-           (error "Type mismatch; given" clos "as rator in value-of-cbv")
-       (apply-closure clos a)))]))
+    [`(,rator ,rand) (apply-closure (value-of-cbv rator env)
+                                    (value-of-cbv rand env))]))
 
 
-(: make-closure-cbv (-> Symbol Exp Env-Cbv Closure-Cbv))
+(: make-closure-cbv (-> Symbol Exp Env Closure))
 (define (make-closure-cbv x body env)
   (lambda (a) a))
 
