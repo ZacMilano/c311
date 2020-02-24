@@ -1,5 +1,14 @@
 #lang racket
 
+
+; Ordered rules of CPS:
+; 1. Update names
+; 2. Use lets to move the serious calls to tail position
+; 3. Add a 'k' parameter to every lambda
+; 4. Rewrite lets using lambdas. Note that every function now takes an extra argument
+; 5. Return the simple values by applying k to them. Note that lambdas are simple.
+
+
 ; Initial continuation
 (define empty-k
   (lambda ()
