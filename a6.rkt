@@ -363,6 +363,174 @@
  fib-tests-data)
 
 
+; Problem 10
+(define (unfold p f g seed)
+  ((lambda (h)
+     ((h h) seed '()))
+   (lambda (h)
+     (lambda (seed ans)
+       (if (p seed)
+           ans
+           ((h h) (g seed) (cons (f seed) ans)))))))
+
+#;(define (unfold-cps p-cps f-cps g-cps seed k)
+  ((lambda (h-cps)
+     (h-cps
+      h-cps
+      (lambda (hh-cps)
+        (hh-cps seed '() k)))
+     #;((h-cps h-cps k) seed '()))
+   (lambda (h-cps k)
+     (lambda (seed ans)
+       (p-cps
+        seed
+        (lambda (b)
+          (if b
+              (k ans)
+              (h-cps h-cps   ;; a new function
+                     (lambda (hh-cps)
+                       (g-cps seed
+                              (lambda (g-val) ;; whatever g yeilds
+                                (f-cps seed
+                                       (lambda (f-val) ;; whatever f yeilds
+                                         (hh-cps g-val (cons f-val ans) k)))))))
+              #;((h-cps h-cps)
+                 (g-cps seed)
+                 (cons (f-cps seed) ans)))))))))
+
+; A Problem10TestCase will
+; (make-u scream bc problem10 is-weird)
+; p is A->bool
+; f is A->B
+; g is A->C
+; seed is A
+(define-struct u [p f g seed])
+
+(define null?-cps
+    (lambda (ls k)
+      (k (null? ls))))
+(define car-cps
+    (lambda (pr k)
+      (k (car pr))))
+(define cdr-cps
+    (lambda (pr k)
+      (k (cdr pr))))
+
+(define unfold-data
+  '((a b c d e)
+    (i
+     d o n t
+     u n d e r s t a n d
+     w h a t
+     t h i s
+     f u n c t i o n
+     d o e s)))
+
+#;(for-each
+   (lambda (seed)
+   (check-equal? (unfold null? car cdr seed)
+                 (unfold-cps null?-cps car-cps cdr-cps seed (empty-k))))
+ unfold-data)
+
+
+; Problem 11
+(define empty-s
+  (lambda ()
+    '()))
+ 
+(define unify
+  (lambda (u v s)
+    (cond
+      [(eqv? u v) s]
+      [(number? u) (cons (cons u v) s)]
+      [(number? v) (unify v u s)]
+      [(pair? u)
+       (if (pair? v)
+           (let ((s (unify (find (car u) s) (find (car v) s) s)))
+             (if s (unify (find (cdr u) s) (find (cdr v) s) s) #f))
+           #f)]
+      [else #f])))
+
+; this function is so cool
+(define unify-cps
+  (lambda (u v s k)
+    (cond
+      [(eqv? u v) (k s)]
+      [(number? u) (k (cons (cons u v) s))]
+      [(number? v) (unify-cps v u s k)]
+      [(pair? u)
+       (if (pair? v)
+           (unify-cps (find (car u) s)
+                      (find (car v) s)
+                      s
+                      (lambda (s) (if s
+                                      (unify-cps (find (cdr u) s)
+                                                 (find (cdr v) s)
+                                                 s k)
+                                      #f)))
+           
+           #f)]
+      [else #f])))
+
+; A Problem11TestCase is
+; (make-un (list or single value of type Symbol/Number(/probably more) of size L)
+;          (list or single value of type Symbol/Number(/probably more) of size L)
+;          (list or single value of type Symbol/Number(/probably more)))
+(define-struct un [u v s])
+
+(define unify-data
+  (list (make-un 'x 5 (empty-s))
+        (make-un 'x 5 (unify 'y 6 (empty-s)))
+        (make-un '(x y) '(5 6) (empty-s))
+        (make-un 'x 5 (unify 'x 6 (empty-s)))
+        (make-un '(x x) '(5 6) (empty-s))
+        (make-un '(1 2 3) '(x 1 2) (empty-s))
+        (make-un 'x 'y (empty-s))))
+
+(for-each
+   (lambda (tc)
+   (check-equal? (unify (un-u tc) (un-v tc) (un-s tc))
+                 (unify-cps (un-u tc) (un-v tc) (un-s tc) (empty-k))))
+ unify-data)
+
+
+; Problem 12
+(define M
+  (lambda (f)
+    (lambda (ls)
+      (cond
+        ((null? ls) '())
+        (else (cons (f (car ls)) ((M f) (cdr ls))))))))
+
+; "Define and test" lol test, you wild
+(define M-cps
+  (lambda (f-cps k1)
+    (k1 (lambda (ls k2)
+          (cond
+            [(null? ls) (k2 '())]
+            [else
+             (M-cps f-cps
+                    (lambda (map-f-onto)
+                      (map-f-onto (cdr ls)
+                                  (lambda (mapped-rest)
+                                    (f-cps (car ls)
+                                           (lambda (mapped-first)
+                                             (k2 (cons mapped-first mapped-rest))))))))
+             #;(cons (f-cps (car ls))
+                     ((M-cps f-cps) (cdr ls)))])))))
+
+
+; Problem 13
+(define use-of-M
+  ((M (lambda (n) (add1 n))) '(1 2 3 4 5)))
+
+; I don't like the fact that I called empty-k twice
+(define use-of-M-cps
+  ((M-cps (lambda (n k) (k (add1 n))) (empty-k)) '(1 2 3 4 5) (empty-k)))
+
+(check-equal? use-of-M use-of-M-cps)
+
+
 
 
 
