@@ -94,9 +94,12 @@
           (lambda (zero
                    (app (var 1) (mult (var 0) (lambda (lambda (app (var 0) (mult (var 1)
                                                                                  (var 2)))))))))))
-> (lex '(letcc k (lambda (x) (x (lambda (y) (zero? (x (* y (lambda (z) (lambda (x) (throw k (x (* z y)))))))))))) '())
+> (lex '(letcc k (lambda (x)
+                   (x (lambda (y) (zero? (x (* y (lambda (z)
+                                                   (lambda (x) (throw k(x (* z y)))))))))))) '())
 (letcc
-  (lambda (app (var 0) (lambda (zero (app (var 1) (mult (var 0) (lambda (lambda (throw (var 4) (app (var 0)
+  (lambda (app (var 0) (lambda (zero (app (var 1) (mult (var 0) (lambda (lambda (throw (var 4)
+                                                                                       (app (var 0)
                                  (mult (var 1) (var 2)))))))))))))
 )
 
