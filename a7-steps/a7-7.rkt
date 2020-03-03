@@ -106,55 +106,54 @@
 
 
 ; Problem 3
-(define value-of-cps
-  (lambda (expr env-cps k)
-    (match expr
-      [`(const ,expr) (apply-k k expr)]
-      [`(mult ,x1 ,x2)
-       (value-of-cps
-        x1 env-cps
-        (lambda (n1)
-          (value-of-cps
-           x2 env-cps
-           (lambda (n2) (apply-k k (* n1 n2))))))]
-      [`(sub1 ,x)
-       (value-of-cps
-        x env-cps
-        (lambda (n) (apply-k k (sub1 n))))]
-      [`(zero ,x)
-       (value-of-cps
-        x env-cps
-        (lambda (n) (apply-k k (zero? n))))]
-      [`(if ,test ,conseq ,alt)
-       (value-of-cps
-        test env-cps
-        (lambda (b)
-          (if b
-              (value-of-cps conseq env-cps k)
-              (value-of-cps alt env-cps k))))]
-      [`(letcc ,body)
-       (value-of-cps body (extend-env k env-cps) k)]
-      [`(throw ,k-exp ,v-exp)
-       (value-of-cps k-exp env-cps
-                     (lambda (ke)
-                       (value-of-cps v-exp env-cps ke)))]
-      [`(let ,e ,body)
-       (value-of-cps
-        e env-cps
-        (lambda (assigned-value)
-          (value-of-cps body (extend-env assigned-value env-cps) k)))]
-      [`(var ,y)
-       (apply-env env-cps y k)]
-      [`(lambda ,body)
-       (apply-k k (make-closure body env-cps))]
-      [`(app ,rator ,rand)
-       (value-of-cps
-        rator env-cps
-        (lambda (c-cps)
-          (value-of-cps
-           rand env-cps
-           (lambda (operand)
-             (apply-closure c-cps operand k)))))])))
+(define (value-of-cps expr env-cps k)
+  (match expr
+    [`(const ,expr) (apply-k k expr)]
+    [`(mult ,x1 ,x2)
+     (value-of-cps
+      x1 env-cps
+      (lambda (n1)
+        (value-of-cps
+         x2 env-cps
+         (lambda (n2) (apply-k k (* n1 n2))))))]
+    [`(sub1 ,x)
+     (value-of-cps
+      x env-cps
+      (lambda (n) (apply-k k (sub1 n))))]
+    [`(zero ,x)
+     (value-of-cps
+      x env-cps
+      (lambda (n) (apply-k k (zero? n))))]
+    [`(if ,test ,conseq ,alt)
+     (value-of-cps
+      test env-cps
+      (lambda (b)
+        (if b
+            (value-of-cps conseq env-cps k)
+            (value-of-cps alt env-cps k))))]
+    [`(letcc ,body)
+     (value-of-cps body (extend-env k env-cps) k)]
+    [`(throw ,k-exp ,v-exp)
+     (value-of-cps k-exp env-cps
+                   (lambda (ke)
+                     (value-of-cps v-exp env-cps ke)))]
+    [`(let ,e ,body)
+     (value-of-cps
+      e env-cps
+      (lambda (assigned-value)
+        (value-of-cps body (extend-env assigned-value env-cps) k)))]
+    [`(var ,y)
+     (apply-env env-cps y k)]
+    [`(lambda ,body)
+     (apply-k k (make-closure body env-cps))]
+    [`(app ,rator ,rand)
+     (value-of-cps
+      rator env-cps
+      (lambda (c-cps)
+        (value-of-cps
+         rand env-cps
+         (lambda (operand)
+           (apply-closure c-cps operand k)))))]))
 
 ;(trace value-of-cps)
 
