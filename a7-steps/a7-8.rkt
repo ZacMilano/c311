@@ -170,7 +170,9 @@
     [`(empty-env) (error 'value-of-cps "unbound identifier")]))
 
 (define (apply-closure c-cps a k^)
-  (c-cps a k^))
+  (match c-cps
+    ;[`(closure ) ...]
+    [else (c-cps a k^)]))
 
 (define (apply-k k val)
   (k val))
