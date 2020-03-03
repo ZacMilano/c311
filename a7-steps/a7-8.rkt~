@@ -158,7 +158,8 @@
 ;(trace value-of-cps)
 
 (define (make-closure body env-cps)
-  `(closure ,body ,env-cps))
+  (lambda (a k^)
+          (value-of-cps body (extend-env a env-cps) k^)))
 
 (define (apply-env env y k^)
   (match env
@@ -170,8 +171,8 @@
 
 (define (apply-closure c-cps a k^)
   (match c-cps
-    [`(closure ,body ,env-cps) (value-of-cps body (extend-env a env-cps) k^)]
-    [else (error "Unrecognized closure found in apply-closure:" c-cps "called with" a k^)]))
+    ;[`(closure ) ...]
+    [else (c-cps a k^)]))
 
 (define (apply-k k val)
   (k val))
@@ -313,10 +314,4 @@
                                                 (const 5)))))))
           (const 4)))
 40000
-> (make-closure '(sub1 (var 0)) (empty-env))
-(closure (sub1 (var 0)) (empty-env))
-> (apply-closure (make-closure '(sub1 (var 0)) (extend-env 1 (empty-env))) 1 (empty-k))
-0
-> (apply-closure (make-closure '(sub1 (var 0)) (extend-env 3 (empty-env))) 3 (empty-k))
-2
  )
