@@ -1,5 +1,6 @@
 #lang racket
 (require rackunit)
+(require racket/trace)
 
 (define-syntax test-runner
   (syntax-rules (>)
@@ -104,7 +105,6 @@
 )
 
 
-
 ; Problem 3
 (define value-of-cps
   (lambda (expr env-cps k)
@@ -134,7 +134,11 @@
               (value-of-cps alt env-cps k))))]
       [`(letcc ,body)
        (value-of-cps
-        body (lambda (y) (if (zero? y) k (env-cps (sub1 y))))
+        body
+        (lambda (y k^)
+          (if (zero? y)
+              (k^ k)
+              (env-cps (sub1 y) k^)))
         k)]
       [`(throw ,k-exp ,v-exp)
        (value-of-cps
@@ -150,15 +154,21 @@
         e env-cps
         (lambda (a)
           (value-of-cps
-           body (lambda (y) (if (zero? y) a (env-cps (sub1 y))))
+           body (lambda (y k^)
+                  (if (zero? y)
+                      (k^ a)
+                      (env-cps (sub1 y) k^)))
            k)))]
       [`(var ,y)
-       (k (env-cps y))]
+       (env-cps y k)]
       [`(lambda ,body)
        ; lambdas are simple!!! I should have listened sooner!
        (k (lambda (arg k^)
             (value-of-cps
-             body (lambda (y) (if (zero? y) arg (env-cps (sub1 y))))
+             body (lambda (y k^)
+                    (if (zero? y)
+                        (k^ arg)
+                        (env-cps (sub1 y) k^)))
              k^)))]
       [`(app ,rator ,rand)
        (value-of-cps
@@ -168,13 +178,17 @@
            rand env-cps
            (lambda (ran)
              (c-cps ran k)))))])))
+
+;(trace value-of-cps)
+
+
 ; for debugging
 (define (d exp)
   (value-of-cps exp (empty-env) (empty-k)))
 
 (define empty-env
   (lambda ()
-    (lambda (y)
+    (lambda (y k^)
       (error 'value-of-cps "unbound identifier"))))
  
 (define empty-k
