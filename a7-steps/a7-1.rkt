@@ -111,25 +111,67 @@
     (match expr
       [`(const ,expr) (k expr)]
       [`(mult ,x1 ,x2)
-       (value-of-cps x1 env-cps
-                     (lambda (n1)
-                       (value-of-cps x2 env-cps
-                                     (lambda (n2) (k (* n1 n2))))))]
-      [`(sub1 ,x) (value-of-cps x env-cps (lambda (n) (k (sub1 n))))]
-      [`(zero ,x) (value-of-cps x env-cps (lambda (n) (k (zero? n))))]
+       (value-of-cps
+        x1 env-cps
+        (lambda (n1)
+          (value-of-cps
+           x2 env-cps
+           (lambda (n2) (k (* n1 n2))))))]
+      [`(sub1 ,x)
+       (value-of-cps
+        x env-cps
+        (lambda (n) (k (sub1 n))))]
+      [`(zero ,x)
+       (value-of-cps
+        x env-cps
+        (lambda (n) (k (zero? n))))]
       [`(if ,test ,conseq ,alt)
-       #;(if (value-of-cps test env-cps)
-             (value-of-cps conseq env-cps)
-             (value-of-cps alt env-cps))]
-      [`(letcc ,body) (let/cc k
-                         (value-of-cps body (lambda (y) (if (zero? y) k (env-cps (sub1 y))))))]
-      [`(throw ,k-exp ,v-exp) ((value-of-cps k-exp env-cps) (value-of-cps v-exp env-cps))]
-      [`(let ,e ,body) (let ((a (value-of-cps e env-cps)))
-                         (value-of-cps body (lambda (y) (if (zero? y) a (env-cps (sub1 y))))))]
-      [`(var ,y) (env-cps y)]
-      [`(lambda ,body) (lambda (a) (value-of-cps body (lambda (y) (if (zero? y) a (env-cps (sub1 y))))))]
-      [`(app ,rator ,rand) ((value-of-cps rator env-cps) (value-of-cps rand env-cps))])))
- 
+       (value-of-cps
+        test env-cps
+        (lambda (b)
+          (if b
+              (value-of-cps conseq env-cps k)
+              (value-of-cps alt env-cps k))))]
+      [`(letcc ,body)
+       (value-of-cps
+        body (lambda (y) (if (zero? y) k (env-cps (sub1 y))))
+        k)]
+      [`(throw ,k-exp ,v-exp)
+       (value-of-cps
+        k-exp env-cps
+        (lambda (ke)
+          (value-of-cps
+           v-exp env-cps
+           ; Notice that we ignore the given k here
+           (lambda (ve)
+             (ke ve)))))]
+      [`(let ,e ,body)
+       (value-of-cps
+        e env-cps
+        (lambda (a)
+          (value-of-cps
+           body (lambda (y) (if (zero? y) a (env-cps (sub1 y))))
+           k)))]
+      [`(var ,y)
+       (k (env-cps y))]
+      [`(lambda ,body)
+       ; lambdas are simple!!! I should have listened sooner!
+       (k (lambda (a k^)
+            (value-of-cps
+             body (lambda (y) (if (zero? y) a (env-cps (sub1 y))))
+             k^)))]
+      [`(app ,rator ,rand)
+       (value-of-cps
+        rator env-cps
+        (lambda (rat)
+          (value-of-cps
+           rand env-cps
+           (lambda (ran)
+             (rat ran k)))))])))
+; for debugging
+(define (d exp)
+  (value-of-cps exp (empty-env) (empty-k)))
+
 (define empty-env
   (lambda ()
     (lambda (y)
@@ -140,8 +182,129 @@
     (lambda (v)
       v)))
 
+; Copied tests when everything worked as expected
+(test-runner
+> (d '(mult (const 1)
+            (mult (const 3)
+                  (letcc (mult (const 2)
+                               (throw (var 0) (const 4)))))))
+12
+> (d '(letcc (mult (const 4)
+                   (throw (var 0)
+                        (const 4)))))
+4
+> (d '(letcc (throw (var 0) (mult (const 4)
+        (const 4)))))
+16
+> (d '(mult (const 1) (mult (const 3) (mult (const 2)(const 4)))))
+24
+> (d '(letcc (throw (var 0)
+                  (mult (const 4)
+                        (const 4)))))
+16
+> (d '(letcc (throw (var 0) (sub1 (mult (const 4)
+        (const 4))))))
+15
+> (d '(mult (const 1) (mult (const 3) (mult (const 2)(const 4)))))
+24
+> (d '(mult (const 1) (mult (sub1 (const 3)) (mult (const 2) (sub1 (sub1 (const 4)))))))
+8
+> (d '(if (zero (app (lambda (let (const 50) (mult (var 0) (var 1)))) (const 0)))
+          (letcc (mult (const 1)
+                       (mult (const 2)
+                             (mult (app (lambda (if (zero (var 0))
+                                                    (const 0)
+                                                    (const 5000)))
+                                        (const 0))
+                                   (mult (throw (var 0) (const 4))
+                                         (const 5))))))
+          (const 4)))
+4
+> (d '(if (zero (app (lambda (let (const 50) (mult (var 0) (var 1)))) (const 0)))
+          (letcc (mult (throw (var 0) (const 1))
+                       (mult (const 2)
+                             (mult (app (lambda (if (zero (var 0))
+                                                    (const 0)
+                                                    (const 5000)))
+                                        (const 0))
+                                   (mult (const 4)
+                                         (const 5))))))
+          (const 4)))
+1
+> (d '(if (zero (app (lambda (let (const 50) (mult (var 0) (var 1)))) (const 0)))
+          (letcc (mult (const 1)
+                       (mult (const 2)
+                             (mult (app (lambda (if (zero (var 0))
+                                                    (const 0)
+                                                    (throw (var 1)
+                                                           (const 5000))))
+                                        (const 0))
+                                   (mult (const 4)
+                                         (const 5))))))
+          (const 4)))
+0
+> (d '(if (zero (app (lambda (let (const 50) (mult (var 0) (var 1)))) (const 0)))
+          (letcc (mult (const 1)
+                       (mult (const 2)
+                             (mult (app (lambda (if (zero (var 0))
+                                                    (const 0)
+                                                    (throw (var 1)
+                                                           (const 5000))))
+                                        (const 10))
+                                   (mult (const 4)
+                                         (const 5))))))
+          (const 4)))
+5000
+> (d '(if (zero (app (lambda (let (const 50) (mult (var 0) (var 1)))) (const 10)))
+          (letcc (mult (const 1)
+                       (mult (const 2)
+                             (mult (app (lambda (if (zero (var 0))
+                                                    (const 0)
+                                                    (throw (var 1)
+                                                           (const 5000))))
+                                        (const 10))
+                                   (mult (const 4)
+                                         (const 5))))))
+          (const 4)))
+4
+> (d '(if (zero (app (lambda (let (const 50) (mult (var 0) (var 1)))) (const 10)))
+          (letcc (mult (const 1)
+                       (mult (const 2)
+                             (mult (app (lambda (if (zero (var 0))
+                                                    (const 0)
+                                                    (throw (var 1)
+                                                           (const 5000))))
+                                        (const 10))
+                                   (letcc (mult (throw (var 0) (const 4))
+                                                (const 5)))))))
+          (const 4)))
+4
+> (d '(if (zero (app (lambda (let (const 50) (mult (var 0) (var 1)))) (const 0)))
+          (letcc (mult (const 1)
+                       (mult (const 2)
+                             (mult (app (lambda (if (zero (var 0))
+                                                    (const 0)
+                                                    (throw (var 1)
+                                                           (const 5000))))
+                                        (const 10))
+                                   (letcc (mult (throw (var 0) (const 4))
+                                                (const 5)))))))
+          (const 4)))
+5000
+> (d '(if (zero (app (lambda (let (const 50) (mult (var 0) (var 1)))) (const 0)))
+          (letcc (mult (const 1)
+                       (mult (const 2)
+                             (mult (app (lambda (if (zero (var 0))
+                                                    (const 0)
+                                                    (const 5000)))
+                                        (const 10))
+                                   (letcc (mult (throw (var 0) (const 4))
+                                                (const 5)))))))
+          (const 4)))
+40000
+> 
 
-
+ )
 
 
 
