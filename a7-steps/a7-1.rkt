@@ -156,18 +156,18 @@
        (k (env-cps y))]
       [`(lambda ,body)
        ; lambdas are simple!!! I should have listened sooner!
-       (k (lambda (a k^)
+       (k (lambda (arg k^)
             (value-of-cps
-             body (lambda (y) (if (zero? y) a (env-cps (sub1 y))))
+             body (lambda (y) (if (zero? y) arg (env-cps (sub1 y))))
              k^)))]
       [`(app ,rator ,rand)
        (value-of-cps
         rator env-cps
-        (lambda (rat)
+        (lambda (c-cps)
           (value-of-cps
            rand env-cps
            (lambda (ran)
-             (rat ran k)))))])))
+             (c-cps ran k)))))])))
 ; for debugging
 (define (d exp)
   (value-of-cps exp (empty-env) (empty-k)))
