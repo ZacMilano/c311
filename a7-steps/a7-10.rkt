@@ -144,44 +144,44 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (make-k-mult-n2 k n1)
-  (lambda (n2) (apply-k k (* n1 n2))))
+(define (make-k-mult-n2 n1^ k^)
+  (lambda (n2) (apply-k k^ (* n1^ n2))))
 
-(define (make-k-mult-n1 x2 env-cps k)
+(define (make-k-mult-n1 x2^ env-cps^ k^)
   (lambda (n1)
     (value-of-cps
-     x2 env-cps
-     (make-k-mult-n2 k n1))))
+     x2^ env-cps^
+     (make-k-mult-n2 n1 k^))))
 
-(define (make-k-sub1 k)
-  (lambda (n) (apply-k k (sub1 n))))
+(define (make-k-sub1 k^)
+  (lambda (n) (apply-k k^ (sub1 n))))
 
-(define (make-k-zero? k)
-  (lambda (n) (apply-k k (zero? n))))
+(define (make-k-zero? k^)
+  (lambda (n) (apply-k k^ (zero? n))))
 
-(define (make-k-if conseq alt env-cps k)
+(define (make-k-if conseq^ alt^ env-cps^ k^)
   (lambda (b)
     (if b
-        (value-of-cps conseq env-cps k)
-        (value-of-cps alt env-cps k))))
+        (value-of-cps conseq^ env-cps^ k^)
+        (value-of-cps alt^ env-cps^ k^))))
 
-(define (make-k-throw v-exp env-cps)
+(define (make-k-throw v-exp^ env-cps^)
   (lambda (ke)
-    (value-of-cps v-exp env-cps ke)))
+    (value-of-cps v-exp^ env-cps^ ke)))
 
-(define (make-k-let body env-cps k)
+(define (make-k-let body^ env-cps^ k^)
   (lambda (assigned-value)
-        (value-of-cps body (extend-env assigned-value env-cps) k)))
+        (value-of-cps body^ (extend-env assigned-value env-cps^) k^)))
 
-(define (make-k-operand c-cps k)
+(define (make-k-operand c-cps^ k^)
   (lambda (operand)
-    (apply-closure c-cps operand k)))
+    (apply-closure c-cps^ operand k^)))
 
-(define (make-k-rator rand env-cps k)
+(define (make-k-rator rand^ env-cps^ k^)
   (lambda (c-cps)
     (value-of-cps
-     rand env-cps
-     (make-k-operand c-cps k))))
+     rand^ env-cps^
+     (make-k-operand c-cps K^))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
