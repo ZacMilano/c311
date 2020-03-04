@@ -106,93 +106,103 @@
 
 
 ; Problem 3
-(define value-of-cps
-  (lambda (expr env-cps k)
-    (match expr
-      [`(const ,expr) (apply-k k expr)]
-      [`(mult ,x1 ,x2)
-       (value-of-cps
-        x1 env-cps
-        (lambda (n1)
-          (value-of-cps
-           x2 env-cps
-           (lambda (n2) (apply-k k (* n1 n2))))))]
-      [`(sub1 ,x)
-       (value-of-cps
-        x env-cps
-        (lambda (n) (apply-k k (sub1 n))))]
-      [`(zero ,x)
-       (value-of-cps
-        x env-cps
-        (lambda (n) (apply-k k (zero? n))))]
-      [`(if ,test ,conseq ,alt)
-       (value-of-cps
-        test env-cps
-        (lambda (b)
-          (if b
-              (value-of-cps conseq env-cps k)
-              (value-of-cps alt env-cps k))))]
-      [`(letcc ,body)
-       (value-of-cps
-        body
-        (lambda (y k^)
-          (if (zero? y)
-              ; If we want to access the current continuation,
-              ; apply the env's k to it, ie return it
-              (apply-k k^ k)
-              (apply-env env-cps (sub1 y) k^)))
-        k)]
-      [`(throw ,k-exp ,v-exp)
-       (value-of-cps
-        k-exp env-cps
-        (lambda (ke)
-          (value-of-cps
-           v-exp env-cps
-           ; Notice that we ignore the given k here
-           ; Simply apply the ke to ve
-           ke
-           #;(lambda (ve)
-               (ke ve)))))]
-      [`(let ,e ,body)
-       (value-of-cps
-        e env-cps
-        (lambda (a)
-          (value-of-cps
-           body (lambda (y k^)
-                  (if (zero? y)
-                      (apply-k k^ a)
-                      (apply-env env-cps (sub1 y) k^)))
-           k)))]
-      [`(var ,y)
-       (apply-env env-cps y k)]
-      [`(lambda ,body)
-       ; lambdas are simple!!! I should have listened sooner!
-       (apply-k k (lambda (arg k^)
-                    (value-of-cps
-                     body (lambda (y k^)
-                            (if (zero? y)
-                                (apply-k k^ arg)
-                                (apply-env env-cps (sub1 y) k^)))
-                     k^)))]
-      [`(app ,rator ,rand)
-       (value-of-cps
-        rator env-cps
-        (lambda (c-cps)
-          (value-of-cps
-           rand env-cps
-           (lambda (operand)
-             (apply-closure c-cps operand k)))))])))
+(define (value-of-cps expr env-cps k)
+  (match expr
+    [`(const ,expr) (apply-k k expr)]
+    [`(mult ,x1 ,x2)
+     (value-of-cps
+      x1 env-cps
+      (make-k-mult-n1 x2 env-cps k))]
+    [`(sub1 ,x)
+     (value-of-cps
+      x env-cps
+      (make-k-sub1 k))]
+    [`(zero ,x)
+     (value-of-cps
+      x env-cps
+      (make-k-zero? k))]
+    [`(if ,test ,conseq ,alt)
+     (value-of-cps
+      test env-cps
+      (make-k-if conseq alt env-cps k))]
+    [`(letcc ,body)
+     (value-of-cps body (extend-env k env-cps) k)]
+    [`(throw ,k-exp ,v-exp)
+     (value-of-cps k-exp env-cps
+                   (make-k-throw v-exp env-cps))]
+    [`(let ,e ,body)
+     (value-of-cps
+      e env-cps
+      (make-k-let body env-cps k))]
+    [`(var ,y)
+     (apply-env env-cps y k)]
+    [`(lambda ,body)
+     (apply-k k (make-closure body env-cps))]
+    [`(app ,rator ,rand)
+     (value-of-cps rator env-cps (make-k-rator rand env-cps k))]))
+
+(define (make-k-mult-n2 k n1)
+  (lambda (n2) (apply-k k (* n1 n2))))
+
+(define (make-k-mult-n1 x2 env-cps k)
+  (lambda (n1)
+    (value-of-cps
+     x2 env-cps
+     (make-k-mult-n2 k n1))))
+
+(define (make-k-sub1 k)
+  (lambda (n) (apply-k k (sub1 n))))
+
+(define (make-k-zero? k)
+  (lambda (n) (apply-k k (zero? n))))
+
+(define (make-k-if conseq alt env-cps k)
+  (lambda (b)
+    (if b
+        (value-of-cps conseq env-cps k)
+        (value-of-cps alt env-cps k))))
+
+(define (make-k-throw v-exp env-cps)
+  (lambda (ke)
+    (value-of-cps v-exp env-cps ke)))
+
+(define (make-k-let body env-cps k)
+  (lambda (assigned-value)
+        (value-of-cps body (extend-env assigned-value env-cps) k)))
+
+(define (make-k-operand c-cps k)
+  (lambda (operand)
+    (apply-closure c-cps operand k)))
+
+(define (make-k-rator rand env-cps k)
+  (lambda (c-cps)
+    (value-of-cps
+     rand env-cps
+     (make-k-operand c-cps k))))
 
 ;(trace value-of-cps)
 
-(define (apply-env env-cps var k^)
-  (env-cps var k^))
+(define (make-closure body env-cps)
+  `(closure ,body ,env-cps))
 
-(define (apply-closure c-cps arg k^)
-  (c-cps arg k^))
+(define (apply-env env y k^)
+  (match env
+    [`(extend-env ,value^ ,env-cps^)
+     (if (zero? y)
+         (k^ value^)
+         (apply-env env-cps^ (sub1 y) k^))]
+    [`(empty-env) (error 'value-of-cps "unbound identifier")]))
+
+(define (apply-closure c-cps a k^)
+  (match c-cps
+    [`(closure ,body ,env-cps) (value-of-cps body (extend-env a env-cps) k^)]
+    [else (error "Unrecognized closure found in apply-closure:" c-cps "called with" a k^)]))
 
 (define (apply-k k val)
   (k val))
+
+(define (extend-env value^ env-cps^)
+  `(extend-env ,value^ ,env-cps^))
 
 
 ; for debugging
@@ -201,8 +211,7 @@
 
 (define empty-env
   (lambda ()
-    (lambda (y k^)
-      (error 'value-of-cps "unbound identifier"))))
+    '(empty-env)))
  
 (define empty-k
   (lambda ()
@@ -329,29 +338,10 @@
                                                 (const 5)))))))
           (const 4)))
 40000
+> (make-closure '(sub1 (var 0)) (empty-env))
+(closure (sub1 (var 0)) (empty-env))
+> (apply-closure (make-closure '(sub1 (var 0)) (extend-env 1 (empty-env))) 1 (empty-k))
+0
+> (apply-closure (make-closure '(sub1 (var 0)) (extend-env 3 (empty-env))) 3 (empty-k))
+2
  )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
