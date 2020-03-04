@@ -145,43 +145,43 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-k-mult-n2 n1^ k^)
-  (lambda (n2) (apply-k k^ (* n1^ n2))))
+  (lambda (v) (apply-k k^ (* n1^ v))))
 
 (define (make-k-mult-n1 x2^ env-cps^ k^)
-  (lambda (n1)
+  (lambda (v)
     (value-of-cps
      x2^ env-cps^
-     (make-k-mult-n2 n1 k^))))
+     (make-k-mult-n2 v k^))))
 
 (define (make-k-sub1 k^)
-  (lambda (n) (apply-k k^ (sub1 n))))
+  (lambda (v) (apply-k k^ (sub1 v))))
 
 (define (make-k-zero? k^)
-  (lambda (n) (apply-k k^ (zero? n))))
+  (lambda (v) (apply-k k^ (zero? v))))
 
 (define (make-k-if conseq^ alt^ env-cps^ k^)
-  (lambda (b)
-    (if b
+  (lambda (v)
+    (if v
         (value-of-cps conseq^ env-cps^ k^)
         (value-of-cps alt^ env-cps^ k^))))
 
 (define (make-k-throw v-exp^ env-cps^)
-  (lambda (ke)
-    (value-of-cps v-exp^ env-cps^ ke)))
+  (lambda (v)
+    (value-of-cps v-exp^ env-cps^ v)))
 
 (define (make-k-let body^ env-cps^ k^)
-  (lambda (assigned-value)
-        (value-of-cps body^ (extend-env assigned-value env-cps^) k^)))
+  (lambda (v)
+        (value-of-cps body^ (extend-env v env-cps^) k^)))
 
 (define (make-k-operand c-cps^ k^)
-  (lambda (operand)
-    (apply-closure c-cps^ operand k^)))
+  (lambda (v)
+    (apply-closure c-cps^ v k^)))
 
 (define (make-k-rator rand^ env-cps^ k^)
-  (lambda (c-cps)
+  (lambda (v)
     (value-of-cps
      rand^ env-cps^
-     (make-k-operand c-cps K^))))
+     (make-k-operand v k^))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -204,8 +204,8 @@
     [`(closure ,body ,env-cps) (value-of-cps body (extend-env a env-cps) k^)]
     [else (error "Unrecognized closure found in apply-closure:" c-cps "called with" a k^)]))
 
-(define (apply-k k val)
-  (k val))
+(define (apply-k k v)
+  (k v))
 
 (define (extend-env value^ env-cps^)
   `(extend-env ,value^ ,env-cps^))
