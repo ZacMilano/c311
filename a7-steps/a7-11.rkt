@@ -158,17 +158,17 @@
      (make-k-mult-n2 v k^))))
 
 (define (make-k-sub1 k^)
-  `(make-k-sub1 ,k^)
+  `(k-sub1 ,k^)
   #;(lambda (v) (apply-k k^ (sub1 v)))
   )
 
 (define (make-k-zero? k^)
-  `(make-k-zero? ,k^)
+  `(k-zero? ,k^)
   #;(lambda (v) (apply-k k^ (zero? v)))
   )
 
 (define (make-k-if conseq^ alt^ env-cps^ k^)
-  `(make-k-if ,conseq^ ,alt^ ,env-cps^ ,k^)
+  `(k-if ,conseq^ ,alt^ ,env-cps^ ,k^)
   #;
   (lambda (v)
     (if v
@@ -176,18 +176,26 @@
         (value-of-cps alt^ env-cps^ k^))))
 
 (define (make-k-throw v-exp^ env-cps^)
+  `(k-throw ,v-exp^ ,env-cps^)
+  #;
   (lambda (v)
     (value-of-cps v-exp^ env-cps^ v)))
 
 (define (make-k-let body^ env-cps^ k^)
+  `(k-let ,body^ ,env-cps^ ,k^)
+  #;
   (lambda (v)
-        (value-of-cps body^ (extend-env v env-cps^) k^)))
+    (value-of-cps body^ (extend-env v env-cps^) k^)))
 
 (define (make-k-operand c-cps^ k^)
+  `(k-operand ,c-cps^ ,k^)
+  #;
   (lambda (v)
     (apply-closure c-cps^ v k^)))
 
 (define (make-k-rator rand^ env-cps^ k^)
+  `(k-rator ,rand^ ,env-cps^ ,k^)
+  #;
   (lambda (v)
     (value-of-cps
      rand^ env-cps^
@@ -198,16 +206,22 @@
     [`(k-mult-n2 ,n1^ ,k^) (apply-k k^ (* n1^ v))]
     [`(k-mult-n1 ,x2^ ,env-cps^ ,k^)
      (value-of-cps x2^ env-cps^ (make-k-mult-n2 v k^))]
-    [`(make-k-sub1 ,k^) (apply-k k^ (sub1 v))]
-    [`(make-k-zero? ,k^) (apply-k k^ (zero? v))]
-    [`(make-k-if ,conseq^ ,alt^ ,env-cps^ ,k^)
+    [`(k-sub1 ,k^) (apply-k k^ (sub1 v))]
+    [`(k-zero? ,k^) (apply-k k^ (zero? v))]
+    [`(k-if ,conseq^ ,alt^ ,env-cps^ ,k^)
      (if v
          (value-of-cps conseq^ env-cps^ k^)
          (value-of-cps alt^ env-cps^ k^))]
+    [`(k-throw ,v-exp^ ,env-cps^) (value-of-cps v-exp^ env-cps^ v)]
+    [`(k-let ,body^ ,env-cps^ ,k^) (value-of-cps body^ (extend-env v env-cps^) k^)]
+    [`(k-operand ,c-cps^ ,k^) (apply-closure c-cps^ v k^)]
+    [`(k-rator ,rand^ ,env-cps^ ,k^)
+     (value-of-cps rand^ env-cps^ (make-k-operand v k^))]
+    [`(k-init) v]
     [otherwise (k v)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;(trace value-of-cps)
 
@@ -241,6 +255,8 @@
  
 (define empty-k
   (lambda ()
+    '(k-init)
+    #;
     (lambda (v)
       v)))
 
