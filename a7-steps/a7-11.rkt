@@ -145,21 +145,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-k-mult-n2 n1^ k^)
-  (lambda (v) (apply-k k^ (* n1^ v))))
+  `(k-mult-n2 ,n1^ ,k^)
+  #;(lambda (v) (apply-k k^ (* n1^ v)))
+  )
 
 (define (make-k-mult-n1 x2^ env-cps^ k^)
+  `(k-mult-n1 ,x2^ ,env-cps^ ,k^)
+  #;
   (lambda (v)
     (value-of-cps
      x2^ env-cps^
      (make-k-mult-n2 v k^))))
 
 (define (make-k-sub1 k^)
-  (lambda (v) (apply-k k^ (sub1 v))))
+  `(make-k-sub1 ,k^)
+  #;(lambda (v) (apply-k k^ (sub1 v)))
+  )
 
 (define (make-k-zero? k^)
-  (lambda (v) (apply-k k^ (zero? v))))
+  `(make-k-zero? ,k^)
+  #;(lambda (v) (apply-k k^ (zero? v)))
+  )
 
 (define (make-k-if conseq^ alt^ env-cps^ k^)
+  `(make-k-if ,conseq^ ,alt^ ,env-cps^ ,k^)
+  #;
   (lambda (v)
     (if v
         (value-of-cps conseq^ env-cps^ k^)
@@ -185,6 +195,15 @@
 
 (define (apply-k k v)
   (match k
+    [`(k-mult-n2 ,n1^ ,k^) (apply-k k^ (* n1^ v))]
+    [`(k-mult-n1 ,x2^ ,env-cps^ ,k^)
+     (value-of-cps x2^ env-cps^ (make-k-mult-n2 v k^))]
+    [`(make-k-sub1 ,k^) (apply-k k^ (sub1 v))]
+    [`(make-k-zero? ,k^) (apply-k k^ (zero? v))]
+    [`(make-k-if ,conseq^ ,alt^ ,env-cps^ ,k^)
+     (if v
+         (value-of-cps conseq^ env-cps^ k^)
+         (value-of-cps alt^ env-cps^ k^))]
     [otherwise (k v)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
