@@ -164,7 +164,7 @@
   (match env
     [`(extend-env ,value^ ,env-cps^)
      (if (zero? y)
-         (k^ value^)
+         (apply-k k^ value^)
          (apply-env env-cps^ (sub1 y) k^))]
     [`(empty-env) (error 'value-of-cps "unbound identifier")]))
 
