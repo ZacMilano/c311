@@ -4,11 +4,7 @@
 ; From a6
 (define empty-k
   (lambda ()
-    (let ((once-only #f))
-      (lambda (v)
-        (if once-only
-	    (error 'empty-k "You can only invoke the empty continuation once")
-	    (begin (set! once-only #t) v))))))
+    (lambda (v) v)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,12 +26,17 @@
 
 (define make-ack-k
   (lambda (m k)
-    (lambda (v) (ack (sub1 m) v k))))
+    `(make-ack-k ,m ,k)))
+
+ (define empty-ack-k
+  (lambda ()
+    `(empty-ack-k)))
 
  (define apply-ack-k
   (lambda (k v)
     (match k
-      [_ (k v)])))
+      [`(make-ack-k ,m ,k) (ack (sub1 m) v k)]
+      [`(empty-ack-k) v])))
 
 (define ack-reg-driver
   (lambda (m n)
@@ -62,7 +63,7 @@
 
 (for-each
  (lambda (test-case)
-   (check-equal? (ack (car test-case) (cdr test-case) (empty-k))
+   (check-equal? (ack (car test-case) (cdr test-case) (empty-ack-k))
                  (ack-orig (car test-case) (cdr test-case) (empty-k))))
  ack-tests-data)
 
