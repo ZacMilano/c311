@@ -20,9 +20,20 @@
 (define ack
   (lambda (m n k)
     (cond
-      [(zero? m) (apply-ack-k k (add1 n))]
-      [(zero? n) (ack (sub1 m) 1 k)]
-      [else (ack m (sub1 n) (make-ack-k m k))])))
+      [(zero? m)
+       (let* ([k k]
+              [v (add1 n)])
+         (apply-ack-k k v))]
+      [(zero? n)
+       (let* ([k k]
+              [m (sub1 m)]
+              [n 1])
+         (ack m n k))]
+      [else
+       (let* ([k (make-ack-k m k)]
+              [m m]
+              [n (sub1 n)])
+         (ack m n k))])))
 
 (define make-ack-k
   (lambda (m k)
@@ -35,7 +46,11 @@
  (define apply-ack-k
   (lambda (k v)
     (match k
-      [`(make-ack-k ,m ,k) (ack (sub1 m) v k)]
+      [`(make-ack-k ,m ,k)
+       (let* ([k k]
+              [m (sub1 m)]
+              [n v])
+         (ack m n k))]
       [`(empty-ack-k) v])))
 
 (define ack-reg-driver
@@ -63,7 +78,10 @@
 
 (for-each
  (lambda (test-case)
-   (check-equal? (ack (car test-case) (cdr test-case) (empty-ack-k))
+   (check-equal? (let* ([k (empty-ack-k)]
+                        [m (car test-case)]
+                        [n (cdr test-case)])
+                   (ack m n k))
                  (ack-orig (car test-case) (cdr test-case) (empty-k))))
  ack-tests-data)
 
