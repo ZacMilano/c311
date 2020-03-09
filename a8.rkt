@@ -17,23 +17,32 @@
       [(zero? n) (ack-orig (sub1 m) 1 k)]
       [else (ack-orig m (sub1 n) (lambda (v) (ack-orig (sub1 m) v k)))])))
 
+
+; Starting value of #f is arbitrary; ideally, it would be a value that is not
+; allowed to be used or accessed legally
+(define ack-m #f)
+(define ack-n #f)
+(define ack-k #f)
+(define apply-ack-k-k #f)
+(define apply-ack-k-v #f)
+
 (define ack
-  (lambda (ack-m ack-n ack-k)
+  (lambda ()
     (cond
       [(zero? ack-m)
-       (let* ([apply-ack-k-k ack-k]
-              [apply-ack-k-v (add1 ack-n)])
-         (apply-ack-k apply-ack-k-k apply-ack-k-v))]
+       (begin [set! apply-ack-k-k ack-k]
+              [set! apply-ack-k-v (add1 ack-n)]
+              (apply-ack-k))]
       [(zero? ack-n)
-       (let* ([ack-k ack-k]
-              [ack-m (sub1 ack-m)]
-              [ack-n 1])
-         (ack ack-m ack-n ack-k))]
+       (begin [set! ack-k ack-k]
+              [set! ack-m (sub1 ack-m)]
+              [set! ack-n 1]
+              (ack))]
       [else
-       (let* ([ack-k (make-ack-k ack-m ack-k)]
-              [ack-m ack-m]
-              [ack-n (sub1 ack-n)])
-         (ack ack-m ack-n ack-k))])))
+       (begin [set! ack-k (make-ack-k ack-m ack-k)]
+              [set! ack-m ack-m]
+              [set! ack-n (sub1 ack-n)]
+              (ack))])))
 
 (define make-ack-k
   (lambda (m k)
@@ -44,13 +53,13 @@
     `(empty-ack-k)))
 
  (define apply-ack-k
-  (lambda (apply-ack-k-k apply-ack-k-v)
+  (lambda ()
     (match apply-ack-k-k
       [`(make-ack-k ,m ,k)
-       (let* ([ack-k k]
-              [ack-m (sub1 m)]
-              [ack-n apply-ack-k-v])
-         (ack ack-m ack-n ack-k))]
+       (begin [set! ack-k k]
+              [set! ack-m (sub1 m)]
+              [set! ack-n apply-ack-k-v]
+         (ack))]
       [`(empty-ack-k) apply-ack-k-v])))
 
 (define ack-reg-driver
@@ -78,10 +87,10 @@
 
 (for-each
  (lambda (test-case)
-   (check-equal? (let* ([ack-k (empty-ack-k)]
-                        [ack-m (car test-case)]
-                        [ack-n (cdr test-case)])
-                   (ack ack-m ack-n ack-k))
+   (check-equal? (begin [set! ack-k (empty-ack-k)]
+                        [set! ack-m (car test-case)]
+                        [set! ack-n (cdr test-case)]
+                   (ack))
                  (ack-orig (car test-case) (cdr test-case) (empty-k))))
  ack-tests-data)
 
