@@ -18,22 +18,22 @@
       [else (ack-orig m (sub1 n) (lambda (v) (ack-orig (sub1 m) v k)))])))
 
 (define ack
-  (lambda (m n k)
+  (lambda (ack-m ack-n ack-k)
     (cond
-      [(zero? m)
-       (let* ([k k]
-              [v (add1 n)])
-         (apply-ack-k k v))]
-      [(zero? n)
-       (let* ([k k]
-              [m (sub1 m)]
-              [n 1])
-         (ack m n k))]
+      [(zero? ack-m)
+       (let* ([apply-ack-k-k ack-k]
+              [apply-ack-k-v (add1 ack-n)])
+         (apply-ack-k apply-ack-k-k apply-ack-k-v))]
+      [(zero? ack-n)
+       (let* ([ack-k ack-k]
+              [ack-m (sub1 ack-m)]
+              [ack-n 1])
+         (ack ack-m ack-n ack-k))]
       [else
-       (let* ([k (make-ack-k m k)]
-              [m m]
-              [n (sub1 n)])
-         (ack m n k))])))
+       (let* ([ack-k (make-ack-k ack-m ack-k)]
+              [ack-m ack-m]
+              [ack-n (sub1 ack-n)])
+         (ack ack-m ack-n ack-k))])))
 
 (define make-ack-k
   (lambda (m k)
@@ -44,14 +44,14 @@
     `(empty-ack-k)))
 
  (define apply-ack-k
-  (lambda (k v)
-    (match k
+  (lambda (apply-ack-k-k apply-ack-k-v)
+    (match apply-ack-k-k
       [`(make-ack-k ,m ,k)
-       (let* ([k k]
-              [m (sub1 m)]
-              [n v])
-         (ack m n k))]
-      [`(empty-ack-k) v])))
+       (let* ([ack-k k]
+              [ack-m (sub1 m)]
+              [ack-n apply-ack-k-v])
+         (ack ack-m ack-n ack-k))]
+      [`(empty-ack-k) apply-ack-k-v])))
 
 (define ack-reg-driver
   (lambda (m n)
@@ -78,10 +78,10 @@
 
 (for-each
  (lambda (test-case)
-   (check-equal? (let* ([k (empty-ack-k)]
-                        [m (car test-case)]
-                        [n (cdr test-case)])
-                   (ack m n k))
+   (check-equal? (let* ([ack-k (empty-ack-k)]
+                        [ack-m (car test-case)]
+                        [ack-n (cdr test-case)])
+                   (ack ack-m ack-n ack-k))
                  (ack-orig (car test-case) (cdr test-case) (empty-k))))
  ack-tests-data)
 
