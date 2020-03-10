@@ -101,25 +101,43 @@
       [(null? ls) (k 1)]
       [(pair? (car ls))
        (depth-orig (car ls)
-              (lambda (l)
-                (depth-orig (cdr ls)
-                       (lambda (r)
-                         (let ((l (add1 l)))
-                           (if (< l r) (k r) (k l)))))))]
+                   (lambda (l)
+                     (depth-orig (cdr ls)
+                                 (lambda (r)
+                                   (let ((l (add1 l)))
+                                     (if (< l r) (k r) (k l)))))))]
       [else (depth-orig (cdr ls) k)])))
 
 (define depth
   (lambda (ls k)
     (cond
-      [(null? ls) (k 1)]
+      [(null? ls) (apply-k k 1)]
       [(pair? (car ls))
        (depth (car ls)
-	      (lambda (l)
-		(depth (cdr ls)
-		       (lambda (r)
-			 (let ((l (add1 l)))
-			   (if (< l r) (k r) (k l)))))))]
+	      (make-k-depth-car ls k))]
       [else (depth (cdr ls) k)])))
+
+(define make-k-depth-cdr
+  (lambda (l k)
+    (lambda (r)
+      (let ((l (add1 l)))
+        (if (< l r)
+            (apply-k k r)
+            (apply-k k l))))))
+
+(define make-k-depth-car
+  (lambda (ls k)
+    (lambda (l)
+      (depth (cdr ls)
+             (make-k-depth-cdr l k)))))
+
+(define make-k-depth-init
+  (lambda ()
+    (lambda (v) v)))
+
+(define apply-k
+  (lambda (k v)
+    (k v)))
 
 (define depth-tests-data
   '(()
@@ -144,7 +162,7 @@
 
 (for-each
  (lambda (test-case)
-   (check-equal? (depth test-case (empty-k))
-                 (depth-orig test-case (empty-k))))
+   (check-equal? (depth test-case (make-k-depth-init))
+                 (depth-orig test-case (make-k-depth-init))))
  depth-tests-data)
 
