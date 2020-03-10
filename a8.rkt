@@ -69,6 +69,8 @@
            [set! ack-n n]
            (ack))))
 
+; I don't want to figure out the result of actual ack calls so these tests are
+; just going to compare to the original ack
 (define ack-tests-data
   (list (cons 0 0)
         (cons 1 1)
@@ -93,6 +95,19 @@
 
 
 
+(define depth-orig
+  (lambda (ls k)
+    (cond
+      [(null? ls) (k 1)]
+      [(pair? (car ls))
+       (depth-orig (car ls)
+              (lambda (l)
+                (depth-orig (cdr ls)
+                       (lambda (r)
+                         (let ((l (add1 l)))
+                           (if (< l r) (k r) (k l)))))))]
+      [else (depth-orig (cdr ls) k)])))
+
 (define depth
   (lambda (ls k)
     (cond
@@ -106,10 +121,30 @@
 			   (if (< l r) (k r) (k l)))))))]
       [else (depth (cdr ls) k)])))
 
+(define depth-tests-data
+  '(()
+    (1 (2 (3 (4))))
+    (1 23  (21 ((((5 (5 (2)) 6) 6) 9) 1)) 0)
+    (())
+    (1 . ())
+    ((1 ()) 3)
+    ((1 2 (2 4 (1 ((3 4 (((((4) 6) 7) 8) 9) 1))))))
+    ((((((((((((((()))))))))))))))
+    (((((((((((((((1)))))))))))))))
+    (1 2 3 4 6 7 2345 2354 2)
+    ((((((((()))))))) . ((((((((((((((((((())))))))))))))))))))
+    (ayo ayo asdfasdf asdf asdf asdf 2)))
+
 (define depth-reg-driver
   (lambda (ls k)
     (error 'depth-reg-driver "leave me alone meanie im not ready yet")
     #;
     (begin [set! depth-ls ls]
            (depth))))
+
+(for-each
+ (lambda (test-case)
+   (check-equal? (depth test-case (empty-k))
+                 (depth-orig test-case (empty-k))))
+ depth-tests-data)
 
