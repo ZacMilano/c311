@@ -114,35 +114,29 @@
 (define depth
   (lambda (ls k)
     (cond
-      [(null? ls) (apply-k k 1)]
+      [(null? ls)
+       (let* ([k k]
+              [v 1])
+         (apply-k k v))]
       [(pair? (car ls))
-       (depth (car ls)
-	      (make-k-depth-car ls k))]
-      [else (depth (cdr ls) k)])))
+       (let* ([k (make-k-depth-car ls k)]
+              [ls (car ls)])
+           (depth ls k))]
+      [else (let* ([k k]
+                   [ls (cdr ls)])
+              (depth ls k))])))
 
 (define make-k-depth-cdr
   (lambda (l k)
-    `(make-k-depth-cdr ,l ,k)
-    #;
-    (lambda (v)
-      (let ((l (add1 l)))
-        (if (< l v)
-            (apply-k k v)
-            (apply-k k l))))))
+    `(make-k-depth-cdr ,l ,k)))
 
 (define make-k-depth-car
   (lambda (ls k)
-    `(make-k-depth-car ,ls ,k)
-    #;
-    (lambda (v)
-      (depth (cdr ls)
-             (make-k-depth-cdr v k)))))
+    `(make-k-depth-car ,ls ,k)))
 
 (define make-k-depth-init
   (lambda ()
-    `(empty-depth-k)
-    #;
-    (lambda (v) v)))
+    `(empty-depth-k)))
 
 (define apply-k
   (lambda (k v)
