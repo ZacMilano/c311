@@ -64,9 +64,8 @@
 
 (define ack-reg-driver
   (lambda (m n)
-    (error 'ack-reg-driver "leave me alone meanie im not ready yet")
-    #;
-    (begin [set! ack-m m]
+    (begin [set! ack-k (empty-ack-k)]
+           [set! ack-m m]
            [set! ack-n n]
            (ack))))
 
@@ -87,10 +86,7 @@
 
 (for-each
  (lambda (test-case)
-   (check-equal? (begin [set! ack-k (empty-ack-k)]
-                        [set! ack-m (car test-case)]
-                        [set! ack-n (cdr test-case)]
-                   (ack))
+   (check-equal? (ack-reg-driver (car test-case) (cdr test-case))
                  (ack-orig (car test-case) (cdr test-case) (empty-k))))
  ack-tests-data)
 
