@@ -117,7 +117,7 @@
       [(null? ls)
        (let* ([k k]
               [v 1])
-         (apply-k k v))]
+         (apply-depth-k k v))]
       [(pair? (car ls))
        (let* ([k (make-k-depth-car ls k)]
               [ls (car ls)])
@@ -138,17 +138,22 @@
   (lambda ()
     `(empty-depth-k)))
 
-(define apply-k
+(define apply-depth-k
   (lambda (k v)
     (match k
       [`(make-k-depth-car ,ls ,k)
-       (depth (cdr ls)
-              (make-k-depth-cdr v k))]
+       (let* ([k (make-k-depth-cdr v k)]
+              [ls (cdr ls)])
+         (depth ls k))]
       [`(make-k-depth-cdr ,l ,k)
-       (let ((l (add1 l)))
+       (let ([l (add1 l)])
          (if (< l v)
-             (apply-k k v)
-             (apply-k k l)))]
+             (let* ([k k]
+                    [v v])
+               (apply-depth-k k v))
+             (let* ([k k]
+                    [v l])
+                 (apply-depth-k k v))))]
       [`(empty-depth-k) v])))
 
 (define depth-tests-data
