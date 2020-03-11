@@ -111,20 +111,26 @@
                                      (if (< l r) (k r) (k l)))))))]
       [else (depth-orig (cdr ls) k)])))
 
+
+(define depth-ls #f)
+(define depth-k #f)
+(define apply-depth-k-k #f)
+(define apply-depth-k-v #f)
+
 (define depth
-  (lambda (depth-ls depth-k)
+  (lambda ()
     (cond
       [(null? depth-ls)
-       (let* ([apply-depth-k-k depth-k]
-              [apply-depth-k-v 1])
-         (apply-depth-k apply-depth-k-k apply-depth-k-v))]
+       (begin [set! apply-depth-k-k depth-k]
+              [set! apply-depth-k-v 1]
+              (apply-depth-k))]
       [(pair? (car depth-ls))
-       (let* ([depth-k (make-k-depth-car depth-ls depth-k)]
-              [depth-ls (car depth-ls)])
-           (depth depth-ls depth-k))]
-      [else (let* ([depth-k depth-k]
-                   [depth-ls (cdr depth-ls)])
-              (depth depth-ls depth-k))])))
+       (begin [set! depth-k (make-k-depth-car depth-ls depth-k)]
+              [set! depth-ls (car depth-ls)]
+              (depth))]
+      [else (begin [set! depth-k depth-k]
+                   [set! depth-ls (cdr depth-ls)]
+                   (depth))])))
 
 (define make-k-depth-cdr
   (lambda (l k)
@@ -139,21 +145,21 @@
     `(empty-depth-k)))
 
 (define apply-depth-k
-  (lambda (apply-depth-k-k apply-depth-k-v)
+  (lambda ()
     (match apply-depth-k-k
       [`(make-k-depth-car ,ls ,k)
-       (let* ([depth-k (make-k-depth-cdr apply-depth-k-v k)]
-              [depth-ls (cdr ls)])
-         (depth depth-ls depth-k))]
+       (begin [set! depth-k (make-k-depth-cdr apply-depth-k-v k)]
+              [set! depth-ls (cdr ls)]
+              (depth))]
       [`(make-k-depth-cdr ,l ,k)
        (let ([l (add1 l)])
          (if (< l apply-depth-k-v)
-             (let* ([apply-depth-k-k k]
-                    [apply-depth-k-v apply-depth-k-v])
-               (apply-depth-k apply-depth-k-k apply-depth-k-v))
-             (let* ([apply-depth-k-k k]
-                    [apply-depth-k-v l])
-                 (apply-depth-k apply-depth-k-k apply-depth-k-v))))]
+             (begin [set! apply-depth-k-k k]
+                    [set! apply-depth-k-v apply-depth-k-v]
+                    (apply-depth-k))
+             (begin [set! apply-depth-k-k k]
+                    [set! apply-depth-k-v l]
+                    (apply-depth-k))))]
       [`(empty-depth-k) apply-depth-k-v])))
 
 (define depth-tests-data
@@ -171,17 +177,14 @@
     (ayo ayo asdfasdf asdf asdf asdf 2)))
 
 (define depth-reg-driver
-  (lambda (ls k)
-    (error 'depth-reg-driver "leave me alone meanie im not ready yet")
-    #;
-    (begin [set! depth-ls ls]
+  (lambda (ls)
+    (begin [set! depth-k (make-k-depth-init)]
+           [set! depth-ls ls]
            (depth))))
 
 (for-each
  (lambda (test-case)
-   (check-equal? (let* ([depth-k (make-k-depth-init)]
-                        [depth-ls test-case])
-                   (depth depth-ls depth-k))
+   (check-equal? (depth-reg-driver test-case)
                  (depth-orig test-case (empty-k))))
  depth-tests-data)
 
