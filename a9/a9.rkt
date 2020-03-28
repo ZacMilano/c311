@@ -15,6 +15,8 @@
   (lambda body)
   (app rator rand))
 
+(define-union clos
+  (closure body env-cps))
 
 (define (value-of-cps to-eval env-cps k)
   (union-case to-eval expr ; match 'to-eval' against union type 'expr'
@@ -104,9 +106,6 @@
 
 ;(trace value-of-cps)
 
-(define-union clos
-  (closure body env-cps))
-
 (define (apply-env env y k^)
   (match env
     [`(extend-env ,value^ ,env-cps^)
@@ -117,8 +116,7 @@
 
 (define (apply-closure c-cps a k^)
   (union-case c-cps clos
-    [(closure body env-cps) (value-of-cps body (extend-env a env-cps) k^)]
-    ))
+    [(closure body env-cps) (value-of-cps body (extend-env a env-cps) k^)]))
 
 (define (extend-env value^ env-cps^)
   `(extend-env ,value^ ,env-cps^))
