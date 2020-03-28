@@ -164,12 +164,12 @@
          (apply-env env-cps^ (sub1 y) k^))]
     [(empty-env) (error 'value-of-cps "unbound identifier")]))
 
-(define (apply-closure c-cps a k^)
-  (union-case c-cps clos
+(define (apply-closure ac-c-cps ac-a ac-k^)
+  (union-case ac-c-cps clos
     [(closure body env-cps)
-     (let* ([vo-k k^]
+     (let* ([vo-k ac-k^]
             [vo-to-eval body]
-            [vo-env-cps (envr_extend-env a env-cps)])
+            [vo-env-cps (envr_extend-env ac-a env-cps)])
        (value-of-cps vo-to-eval vo-env-cps vo-k))]))
 
 
