@@ -113,18 +113,18 @@
 (define (make-k-rator rand^ env-cps^ k^)
   `(k-rator ,rand^ ,env-cps^ ,k^))
 |#
-(define (apply-k k v)
-  (union-case k kt
-    [(k-mult-n2 n1^ k^) (apply-k k^ (* n1^ v))]
+(define (apply-k ak-k ak-v)
+  (union-case ak-k kt
+    [(k-mult-n2 n1^ k^) (apply-k k^ (* n1^ ak-v))]
     [(k-mult-n1 x2^ env-cps^ k^)
-     (let* ([vo-k (kt_k-mult-n2 v k^)]
+     (let* ([vo-k (kt_k-mult-n2 ak-v k^)]
             [vo-to-eval x2^]
             [vo-env-cps env-cps^])
        (value-of-cps vo-to-eval vo-env-cps vo-k))]
-    [(k-sub1 k^) (apply-k k^ (sub1 v))]
-    [(k-zero? k^) (apply-k k^ (zero? v))]
+    [(k-sub1 k^) (apply-k k^ (sub1 ak-v))]
+    [(k-zero? k^) (apply-k k^ (zero? ak-v))]
     [(k-if conseq^ alt^ env-cps^ k^)
-     (if v
+     (if ak-v
          (let* ([vo-k k^]
                 [vo-to-eval conseq^]
                 [vo-env-cps env-cps^])
@@ -134,22 +134,22 @@
                 [vo-env-cps env-cps^])
            (value-of-cps vo-to-eval vo-env-cps vo-k)))]
     [(k-throw v-exp^ env-cps^)
-     (let* ([vo-k v]
+     (let* ([vo-k ak-v]
             [vo-to-eval v-exp^]
             [vo-env-cps env-cps^])
        (value-of-cps vo-to-eval vo-env-cps vo-k))]
     [(k-let body^ env-cps^ k^)
      (let* ([vo-k k^]
             [vo-to-eval body^]
-            [vo-env-cps (envr_extend-env v env-cps^)])
+            [vo-env-cps (envr_extend-env ak-v env-cps^)])
        (value-of-cps vo-to-eval vo-env-cps vo-k))]
-    [(k-operand c-cps^ k^) (apply-closure c-cps^ v k^)]
+    [(k-operand c-cps^ k^) (apply-closure c-cps^ ak-v k^)]
     [(k-rator rand^ env-cps^ k^)
-     (let* ([vo-k (kt_k-operand v k^)]
+     (let* ([vo-k (kt_k-operand ak-v k^)]
             [vo-to-eval rand^]
             [vo-env-cps env-cps^])
        (value-of-cps vo-to-eval vo-env-cps vo-k))]
-    [(k-init) v]))
+    [(k-init) ak-v]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
