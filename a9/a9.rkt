@@ -95,34 +95,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-#|
-(define (make-k-mult-n2 n1^ k^)
-  `(k-mult-n2 ,n1^ ,k^))
 
-(define (make-k-mult-n1 x2^ env-cps^ k^)
-  `(k-mult-n1 ,x2^ ,env-cps^ ,k^))
-
-(define (make-k-sub1 k^)
-  `(k-sub1 ,k^))
-
-(define (make-k-zero? k^)
-  `(k-zero? ,k^))
-
-(define (make-k-if conseq^ alt^ env-cps^ k^)
-  `(k-if ,conseq^ ,alt^ ,env-cps^ ,k^))
-
-(define (make-k-throw v-exp^ env-cps^)
-  `(k-throw ,v-exp^ ,env-cps^))
-
-(define (make-k-let body^ env-cps^ k^)
-  `(k-let ,body^ ,env-cps^ ,k^))
-
-(define (make-k-operand c-cps^ k^)
-  `(k-operand ,c-cps^ ,k^))
-
-(define (make-k-rator rand^ env-cps^ k^)
-  `(k-rator ,rand^ ,env-cps^ ,k^))
-|#
 (define (apply-k)
   (union-case ak-k kt
     [(k-mult-n2 n1^ k^)
