@@ -34,48 +34,63 @@
   (k-operand c-cps^ k^)
   (k-rator rand^ env-cps^ k^))
 
+; Registers
+(define vo-to-eval #f)
+(define vo-env-cps #f)
+(define vo-k #f)
 
-(define (value-of-cps vo-to-eval vo-env-cps vo-k)
+(define ak-k #f)
+(define ak-v #f)
+
+(define ae-env #f)
+(define ae-y #f)
+(define ae-k^ #f)
+
+(define ac-c-cps #f)
+(define ac-a #f)
+(define ac-k^ #f)
+
+(define (value-of-cps)
   (union-case vo-to-eval expr ; match 'to-eval' against union type 'expr'
     [(const const-expr)
      (let* ([ak-k vo-k]
             [ak-v const-expr])
        (apply-k ak-k ak-v))]
     [(mult x1 x2)
-     (let* ([vo-k (kt_k-mult-n1 x2 vo-env-cps vo-k)]
-            [vo-to-eval x1]
-            [vo-env-cps vo-env-cps])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k (kt_k-mult-n1 x2 vo-env-cps vo-k)]
+            [set! vo-to-eval x1]
+            [set! vo-env-cps vo-env-cps]
+            (value-of-cps))]
     [(sub1 x)
-     (let* ([vo-k (kt_k-sub1 vo-k)]
-            [vo-to-eval x]
-            [vo-env-cps vo-env-cps])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k (kt_k-sub1 vo-k)]
+            [set! vo-to-eval x]
+            [set! vo-env-cps vo-env-cps]
+            (value-of-cps))]
     [(zero x)
-     (let* ([vo-k (kt_k-zero? vo-k)]
-            [vo-to-eval x]
-            [vo-env-cps vo-env-cps])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k (kt_k-zero? vo-k)]
+            [set! vo-to-eval x]
+            [set! vo-env-cps vo-env-cps]
+            (value-of-cps))]
     [(if test conseq alt)
-     (let* ([vo-k (kt_k-if conseq alt vo-env-cps vo-k)]
-            [vo-to-eval test]
-            [vo-env-cps vo-env-cps])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k (kt_k-if conseq alt vo-env-cps vo-k)]
+            [set! vo-to-eval test]
+            [set! vo-env-cps vo-env-cps]
+            (value-of-cps))]
     [(letcc body)
-     (let* ([vo-k vo-k]
-            [vo-to-eval body]
-            [vo-env-cps (envr_extend-env vo-k vo-env-cps)])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k vo-k]
+            [set! vo-to-eval body]
+            [set! vo-env-cps (envr_extend-env vo-k vo-env-cps)]
+            (value-of-cps))]
     [(throw k-exp v-exp)
-     (let* ([vo-k (kt_k-throw v-exp vo-env-cps)]
-            [vo-to-eval k-exp]
-            [vo-env-cps vo-env-cps])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k (kt_k-throw v-exp vo-env-cps)]
+            [set! vo-to-eval k-exp]
+            [set! vo-env-cps vo-env-cps]
+            (value-of-cps))]
     [(let e body)
-     (let* ([vo-k (kt_k-let body vo-env-cps vo-k)]
-            [vo-to-eval e]
-            [vo-env-cps vo-env-cps])
-         (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k (kt_k-let body vo-env-cps vo-k)]
+            [set! vo-to-eval e]
+            [set! vo-env-cps vo-env-cps]
+            (value-of-cps))]
     [(var y)
      (let* ([ae-k^ vo-k]
             [ae-env vo-env-cps]
@@ -86,10 +101,10 @@
             [ak-v (clos_closure body vo-env-cps)])
        (apply-k ak-k ak-v))]
     [(app rator rand)
-     (let* ([vo-k (kt_k-rator rand vo-env-cps vo-k)]
-            [vo-to-eval rator]
-            [vo-env-cps vo-env-cps])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]))
+     (begin [set! vo-k (kt_k-rator rand vo-env-cps vo-k)]
+            [set! vo-to-eval rator]
+            [set! vo-env-cps vo-env-cps]
+            (value-of-cps))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -128,10 +143,10 @@
             [ak-v (* n1^ ak-v)])
        (apply-k ak-k ak-v))]
     [(k-mult-n1 x2^ env-cps^ k^)
-     (let* ([vo-k (kt_k-mult-n2 ak-v k^)]
-            [vo-to-eval x2^]
-            [vo-env-cps env-cps^])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k (kt_k-mult-n2 ak-v k^)]
+            [set! vo-to-eval x2^]
+            [set! vo-env-cps env-cps^]
+       (value-of-cps))]
     [(k-sub1 k^)
      (let* ([ak-k k^]
             [ak-v (sub1 ak-v)])
@@ -142,34 +157,34 @@
        (apply-k ak-k ak-v))]
     [(k-if conseq^ alt^ env-cps^ k^)
      (if ak-v
-         (let* ([vo-k k^]
-                [vo-to-eval conseq^]
-                [vo-env-cps env-cps^])
-           (value-of-cps vo-to-eval vo-env-cps vo-k))
-         (let* ([vo-k k^]
-                [vo-to-eval alt^]
-                [vo-env-cps env-cps^])
-           (value-of-cps vo-to-eval vo-env-cps vo-k)))]
+         (begin [set! vo-k k^]
+                [set! vo-to-eval conseq^]
+                [set! vo-env-cps env-cps^]
+                (value-of-cps))
+         (begin [set! vo-k k^]
+                [set! vo-to-eval alt^]
+                [set! vo-env-cps env-cps^]
+                (value-of-cps)))]
     [(k-throw v-exp^ env-cps^)
-     (let* ([vo-k ak-v]
-            [vo-to-eval v-exp^]
-            [vo-env-cps env-cps^])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k ak-v]
+            [set! vo-to-eval v-exp^]
+            [set! vo-env-cps env-cps^]
+            (value-of-cps))]
     [(k-let body^ env-cps^ k^)
-     (let* ([vo-k k^]
-            [vo-to-eval body^]
-            [vo-env-cps (envr_extend-env ak-v env-cps^)])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k k^]
+            [set! vo-to-eval body^]
+            [set! vo-env-cps (envr_extend-env ak-v env-cps^)]
+            (value-of-cps))]
     [(k-operand c-cps^ k^)
      (let* ([ac-k^ k^]
             [ac-c-cps c-cps^]
             [ac-a ak-v])
        (apply-closure ac-c-cps ac-a ac-k^))]
     [(k-rator rand^ env-cps^ k^)
-     (let* ([vo-k (kt_k-operand ak-v k^)]
-            [vo-to-eval rand^]
-            [vo-env-cps env-cps^])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]
+     (begin [set! vo-k (kt_k-operand ak-v k^)]
+            [set! vo-to-eval rand^]
+            [set! vo-env-cps env-cps^]
+            (value-of-cps))]
     [(k-init) ak-v]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -193,18 +208,18 @@
 (define (apply-closure ac-c-cps ac-a ac-k^)
   (union-case ac-c-cps clos
     [(closure body env-cps)
-     (let* ([vo-k ac-k^]
-            [vo-to-eval body]
-            [vo-env-cps (envr_extend-env ac-a env-cps)])
-       (value-of-cps vo-to-eval vo-env-cps vo-k))]))
+     (begin [set! vo-k ac-k^]
+            [set! vo-to-eval body]
+            [set! vo-env-cps (envr_extend-env ac-a env-cps)]
+            (value-of-cps))]))
 
 
 ; for debugging
 (define (d exp)
-  (let* ([vo-k (empty-k)]
-         [vo-to-eval exp]
-         [vo-env-cps (empty-env)])
-    (value-of-cps vo-to-eval vo-env-cps vo-k)))
+  (begin [set! vo-k (empty-k)]
+         [set! vo-to-eval exp]
+         [set! vo-env-cps (empty-env)]
+    (value-of-cps)))
 
 (define empty-env
   (lambda ()
@@ -218,24 +233,24 @@
 
 (define main 
   (lambda ()
-    (let* ([vo-k (empty-k)]          
-           [vo-env-cps (empty-env)]
-           [vo-to-eval
-            (expr_let 
-             (expr_lambda
-              (expr_lambda 
-               (expr_if
-                (expr_zero (expr_var 0))
-                (expr_const 1)
-                (expr_mult (expr_var 0) (expr_app (expr_app (expr_var 1) (expr_var 1))
-                                                  (expr_sub1 (expr_var 0)))))))
-             (expr_mult
-              (expr_letcc
-               (expr_app
-                (expr_app (expr_var 1) (expr_var 1))
-                (expr_throw (expr_var 0) (expr_app (expr_app (expr_var 1) (expr_var 1)) (expr_const 4)))))
-              (expr_const 5)))])
-      (value-of-cps vo-to-eval vo-env-cps vo-k))))
+    (begin [set! vo-k (empty-k)]          
+           [set! vo-env-cps (empty-env)]
+           [set! vo-to-eval
+                 (expr_let 
+                  (expr_lambda
+                   (expr_lambda 
+                    (expr_if
+                     (expr_zero (expr_var 0))
+                     (expr_const 1)
+                     (expr_mult (expr_var 0) (expr_app (expr_app (expr_var 1) (expr_var 1))
+                                                       (expr_sub1 (expr_var 0)))))))
+                  (expr_mult
+                   (expr_letcc
+                    (expr_app
+                     (expr_app (expr_var 1) (expr_var 1))
+                     (expr_throw (expr_var 0) (expr_app (expr_app (expr_var 1) (expr_var 1)) (expr_const 4)))))
+                   (expr_const 5)))]
+           (value-of-cps))))
 
 ; Invocation for quick testing
 (main)
