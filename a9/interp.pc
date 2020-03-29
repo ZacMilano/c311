@@ -1,5 +1,5 @@
-#lang racket
-(require "parenthec.rkt")
+; #lang racket
+; (require "parenthec.rkt")
 
 (define-program-counter pc)
 
