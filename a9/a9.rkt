@@ -37,7 +37,10 @@
 
 (define (value-of-cps vo-to-eval vo-env-cps vo-k)
   (union-case vo-to-eval expr ; match 'to-eval' against union type 'expr'
-    [(const const-expr) (apply-k vo-k const-expr)]
+    [(const const-expr)
+     (let* ([ak-k vo-k]
+            [ak-v const-expr])
+       (apply-k ak-k ak-v))]
     [(mult x1 x2)
      (let* ([vo-k (kt_k-mult-n1 x2 vo-env-cps vo-k)]
             [vo-to-eval x1]
@@ -76,7 +79,9 @@
     [(var y)
      (apply-env vo-env-cps y vo-k)]
     [(lambda body)
-     (apply-k vo-k (clos_closure body vo-env-cps))]
+     (let* ([ak-k vo-k]
+            [ak-v (clos_closure body vo-env-cps)])
+       (apply-k ak-k ak-v))]
     [(app rator rand)
      (let* ([vo-k (kt_k-rator rand vo-env-cps vo-k)]
             [vo-to-eval rator]
@@ -115,14 +120,23 @@
 |#
 (define (apply-k ak-k ak-v)
   (union-case ak-k kt
-    [(k-mult-n2 n1^ k^) (apply-k k^ (* n1^ ak-v))]
+    [(k-mult-n2 n1^ k^)
+     (let* ([ak-k k^]
+            [ak-v (* n1^ ak-v)])
+       (apply-k ak-k ak-v))]
     [(k-mult-n1 x2^ env-cps^ k^)
      (let* ([vo-k (kt_k-mult-n2 ak-v k^)]
             [vo-to-eval x2^]
             [vo-env-cps env-cps^])
        (value-of-cps vo-to-eval vo-env-cps vo-k))]
-    [(k-sub1 k^) (apply-k k^ (sub1 ak-v))]
-    [(k-zero? k^) (apply-k k^ (zero? ak-v))]
+    [(k-sub1 k^)
+     (let* ([ak-k k^]
+            [ak-v (sub1 ak-v)])
+       (apply-k ak-k ak-v))]
+    [(k-zero? k^)
+     (let* ([ak-k k^]
+            [ak-v (zero? ak-v)])
+       (apply-k ak-k ak-v))]
     [(k-if conseq^ alt^ env-cps^ k^)
      (if ak-v
          (let* ([vo-k k^]
@@ -160,7 +174,9 @@
   (union-case ae-env envr
     [(extend-env value^ env-cps^)
      (if (zero? ae-y)
-         (apply-k ae-k^ value^)
+         (let* ([ak-k ae-k^]
+                [ak-v value^])
+           (apply-k ak-k ak-v))
          (apply-env env-cps^ (sub1 ae-y) ae-k^))]
     [(empty-env) (error 'value-of-cps "unbound identifier")]))
 
