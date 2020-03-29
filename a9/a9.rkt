@@ -160,7 +160,11 @@
             [vo-to-eval body^]
             [vo-env-cps (envr_extend-env ak-v env-cps^)])
        (value-of-cps vo-to-eval vo-env-cps vo-k))]
-    [(k-operand c-cps^ k^) (apply-closure c-cps^ ak-v k^)]
+    [(k-operand c-cps^ k^)
+     (let* ([ac-k^ k^]
+            [ac-c-cps c-cps^]
+            [ac-a ak-v])
+       (apply-closure ac-c-cps ac-a ac-k^))]
     [(k-rator rand^ env-cps^ k^)
      (let* ([vo-k (kt_k-operand ak-v k^)]
             [vo-to-eval rand^]
