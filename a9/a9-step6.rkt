@@ -35,20 +35,7 @@
   (k-rator rand^ env-cps^ k^))
 
 ; Registers
-(define vo-to-eval #f)
-(define vo-env-cps #f)
-(define vo-k #f)
-
-(define ak-k #f)
-(define ak-v #f)
-
-(define ae-env #f)
-(define ae-y #f)
-(define ae-k^ #f)
-
-(define ac-c-cps #f)
-(define ac-a #f)
-(define ac-k^ #f)
+(define-registers vo-to-eval vo-env-cps vo-k ak-k ak-v ae-env ae-y ae-k^ ac-c-cps ac-a ac-k^)
 
 (define (value-of-cps)
   (union-case vo-to-eval expr ; match 'to-eval' against union type 'expr'
