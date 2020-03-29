@@ -176,10 +176,10 @@
             [set! vo-env-cps (envr_extend-env ak-v env-cps^)]
             (value-of-cps))]
     [(k-operand c-cps^ k^)
-     (let* ([ac-k^ k^]
-            [ac-c-cps c-cps^]
-            [ac-a ak-v])
-       (apply-closure ac-c-cps ac-a ac-k^))]
+     (begin [set! ac-k^ k^]
+            [set! ac-c-cps c-cps^]
+            [set! ac-a ak-v]
+            (apply-closure))]
     [(k-rator rand^ env-cps^ k^)
      (begin [set! vo-k (kt_k-operand ak-v k^)]
             [set! vo-to-eval rand^]
@@ -205,7 +205,7 @@
                 (apply-env)))]
     [(empty-env) (error 'value-of-cps "unbound identifier")]))
 
-(define (apply-closure ac-c-cps ac-a ac-k^)
+(define (apply-closure)
   (union-case ac-c-cps clos
     [(closure body env-cps)
      (begin [set! vo-k ac-k^]
