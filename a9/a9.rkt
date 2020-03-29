@@ -156,12 +156,12 @@
 
 ;(trace value-of-cps)
 
-(define (apply-env env y k^)
-  (union-case env envr
+(define (apply-env ae-env ae-y ae-k^)
+  (union-case ae-env envr
     [(extend-env value^ env-cps^)
-     (if (zero? y)
-         (apply-k k^ value^)
-         (apply-env env-cps^ (sub1 y) k^))]
+     (if (zero? ae-y)
+         (apply-k ae-k^ value^)
+         (apply-env env-cps^ (sub1 ae-y) ae-k^))]
     [(empty-env) (error 'value-of-cps "unbound identifier")]))
 
 (define (apply-closure ac-c-cps ac-a ac-k^)
