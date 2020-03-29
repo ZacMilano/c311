@@ -3,6 +3,20 @@
 
 (define-program-counter pc)
 
+; Registers
+(define-registers
+  vo-to-eval
+  vo-env-cps
+  vo-k
+  ak-k
+  ak-v
+  ae-env
+  ae-y
+  ae-k^
+  ac-c-cps
+  ac-a
+  ac-k^)
+
 (define-union expr
   (const cexp)
   (var n)
@@ -35,19 +49,6 @@
   (k-operand c-cps^ k^)
   (k-rator rand^ env-cps^ k^))
 
-; Registers
-(define-registers
-  vo-to-eval
-  vo-env-cps
-  vo-k
-  ak-k
-  ak-v
-  ae-env
-  ae-y
-  ae-k^
-  ac-c-cps
-  ac-a
-  ac-k^)
 
 (define-label value-of-cps
   (union-case vo-to-eval expr ; match 'to-eval' against union type 'expr'
@@ -198,7 +199,7 @@
 
 (define-label main 
   (begin #;[set! vo-k (empty-k)]          
-         [set! vo-env-cps (empty-env)]
+         [set! vo-env-cps (envr_empty-env)]
          [set! vo-to-eval
                (expr_let 
                 (expr_lambda

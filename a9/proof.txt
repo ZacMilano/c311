@@ -1,0 +1,20 @@
+zmonr@Zacs-Desktop MINGW64 ~/Onedrive/School Files/c311/a9 (master)
+$ gcc -o a9 a9.c
+a9.c: In function 'emptyr__m__env':
+a9.c:300:8: warning: 'return' with a value, in function returning void
+ return(envrr_emptyr__m__env());
+       ~^~~~~~~~~~~~~~~~~~~~~~~
+a9.c:298:6: note: declared here
+ void emptyr__m__env()
+      ^~~~~~~~~~~~~~
+a9.c: In function 'mount_tram':
+a9.c:519:8: warning: implicit declaration of function 'time' [-Wimplicit-function-declaration]
+ srand (time (NULL));
+        ^~~~
+
+zmonr@Zacs-Desktop MINGW64 ~/Onedrive/School Files/c311/a9 (master)
+$ ./a9
+Fact 5: 120
+
+zmonr@Zacs-Desktop MINGW64 ~/Onedrive/School Files/c311/a9 (master)
+$
