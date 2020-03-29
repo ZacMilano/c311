@@ -53,9 +53,9 @@
 (define (value-of-cps)
   (union-case vo-to-eval expr ; match 'to-eval' against union type 'expr'
     [(const const-expr)
-     (let* ([ak-k vo-k]
-            [ak-v const-expr])
-       (apply-k ak-k ak-v))]
+     (begin [set! ak-k vo-k]
+            [set! ak-v const-expr]
+            (apply-k))]
     [(mult x1 x2)
      (begin [set! vo-k (kt_k-mult-n1 x2 vo-env-cps vo-k)]
             [set! vo-to-eval x1]
@@ -97,9 +97,9 @@
             [ae-y y])
        (apply-env ae-env ae-y ae-k^))]
     [(lambda body)
-     (let* ([ak-k vo-k]
-            [ak-v (clos_closure body vo-env-cps)])
-       (apply-k ak-k ak-v))]
+     (begin [set! ak-k vo-k]
+            [set! ak-v (clos_closure body vo-env-cps)]
+            (apply-k))]
     [(app rator rand)
      (begin [set! vo-k (kt_k-rator rand vo-env-cps vo-k)]
             [set! vo-to-eval rator]
@@ -136,25 +136,25 @@
 (define (make-k-rator rand^ env-cps^ k^)
   `(k-rator ,rand^ ,env-cps^ ,k^))
 |#
-(define (apply-k ak-k ak-v)
+(define (apply-k)
   (union-case ak-k kt
     [(k-mult-n2 n1^ k^)
-     (let* ([ak-k k^]
-            [ak-v (* n1^ ak-v)])
-       (apply-k ak-k ak-v))]
+     (begin [set! ak-k k^]
+            [set! ak-v (* n1^ ak-v)]
+            (apply-k))]
     [(k-mult-n1 x2^ env-cps^ k^)
      (begin [set! vo-k (kt_k-mult-n2 ak-v k^)]
             [set! vo-to-eval x2^]
             [set! vo-env-cps env-cps^]
        (value-of-cps))]
     [(k-sub1 k^)
-     (let* ([ak-k k^]
-            [ak-v (sub1 ak-v)])
-       (apply-k ak-k ak-v))]
+     (begin [set! ak-k k^]
+            [set! ak-v (sub1 ak-v)]
+            (apply-k))]
     [(k-zero? k^)
-     (let* ([ak-k k^]
-            [ak-v (zero? ak-v)])
-       (apply-k ak-k ak-v))]
+     (begin [set! ak-k k^]
+            [set! ak-v (zero? ak-v)]
+            (apply-k))]
     [(k-if conseq^ alt^ env-cps^ k^)
      (if ak-v
          (begin [set! vo-k k^]
@@ -196,9 +196,9 @@
   (union-case ae-env envr
     [(extend-env value^ env-cps^)
      (if (zero? ae-y)
-         (let* ([ak-k ae-k^]
-                [ak-v value^])
-           (apply-k ak-k ak-v))
+         (begin [set! ak-k ae-k^]
+                [set! ak-v value^]
+           (apply-k))
          (let* ([ae-k^ ae-k^]
                 [ae-env env-cps^]
                 [ae-y (sub1 ae-y)])
