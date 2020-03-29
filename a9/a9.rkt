@@ -92,10 +92,10 @@
             [set! vo-env-cps vo-env-cps]
             (value-of-cps))]
     [(var y)
-     (let* ([ae-k^ vo-k]
-            [ae-env vo-env-cps]
-            [ae-y y])
-       (apply-env ae-env ae-y ae-k^))]
+     (begin [set! ae-k^ vo-k]
+            [set! ae-env vo-env-cps]
+            [set! ae-y y]
+            (apply-env))]
     [(lambda body)
      (begin [set! ak-k vo-k]
             [set! ak-v (clos_closure body vo-env-cps)]
@@ -192,17 +192,17 @@
 
 ;(trace value-of-cps)
 
-(define (apply-env ae-env ae-y ae-k^)
+(define (apply-env)
   (union-case ae-env envr
     [(extend-env value^ env-cps^)
      (if (zero? ae-y)
          (begin [set! ak-k ae-k^]
                 [set! ak-v value^]
-           (apply-k))
-         (let* ([ae-k^ ae-k^]
-                [ae-env env-cps^]
-                [ae-y (sub1 ae-y)])
-           (apply-env ae-env ae-y ae-k^)))]
+                (apply-k))
+         (begin [set! ae-k^ ae-k^]
+                [set! ae-env env-cps^]
+                [set! ae-y (sub1 ae-y)]
+                (apply-env)))]
     [(empty-env) (error 'value-of-cps "unbound identifier")]))
 
 (define (apply-closure ac-c-cps ac-a ac-k^)
