@@ -76,13 +76,13 @@
      [(== aa x) (== asv a)]
      [(=/= aa x) (assoco x d asv)])))
 
-(defrel (reverseo ls)
-  (cond
-    ((equal? '() ls) '())
-    (else
-     (match-let* ((`(,a . ,d) ls)
-                  (res (reverseo d)))
-       (append res `(,a))))))
+(defrel (reverseo ls reversed)
+  (conde
+   [(== '() ls) (== '() reversed)]
+   [(fresh (a d res)
+      (== `(,a . ,d) ls)
+      (reverseo d res)
+      (appendo res `(,a) reversed))]))
 
 
 (displayln "stuttero tests:")
@@ -152,7 +152,7 @@
   (_0 ((_1 . _2) (_3 . _4) (_5 . _6) (_7 . _8) (_0 . _9) . _10) (_0 . _9)))
  )
 
-#;
+(displayln "reverso tests:")
 (test-runner
  > (run* q (reverseo '() q))
 (())
