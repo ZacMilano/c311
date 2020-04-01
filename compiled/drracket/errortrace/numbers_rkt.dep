@@ -1,0 +1,1 @@
+("7.5" racket ("99c9bce73255bca97c085e9017285bd7b21e1473" . "81f4e8908567481edc0dba40cd48df867241d35c") #"C:\\Users\\zmonr\\OneDrive\\School Files\\c311\\mk.rkt" (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
