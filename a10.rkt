@@ -68,12 +68,13 @@
       (== stut-ls `(,a ,a . ,res))
       (stuttero d res))]))
 
-(defrel (assoco x ls)
-  (match-let* ((`(,a . ,d) ls)
-               (`(,aa . ,da) a))
-    (cond
-      ((equal? aa x) a)
-      ((not (equal? aa x)) (assoco x d)))))
+(defrel (assoco x ls asv)
+  (fresh (a d aa da)
+    (== `(,a . ,d) ls)
+    (== `(,aa . ,da) a)
+    (conde
+     [(== aa x) (== asv a)]
+     [(=/= aa x) (assoco x d asv)])))
 
 (defrel (reverseo ls)
   (cond
@@ -83,6 +84,8 @@
                   (res (reverseo d)))
        (append res `(,a))))))
 
+
+(displayln "stuttero tests:")
 (test-runner
  > (run 1 q (stuttero q '(1 1 2 2 3 3)))
 ((1 2 3))
@@ -103,7 +106,7 @@
 ((_0 () (_0 _0)) (_0 (_1) (_0 _0 _1 _1)))
 )
 
-#;
+(displayln "assoco tests:")
 (test-runner
  > (run* q (assoco 'x '() q))
 ()
